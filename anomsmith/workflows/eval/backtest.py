@@ -24,25 +24,17 @@ from anomsmith.workflows.eval.metrics import (
 
 logger = logging.getLogger(__name__)
 
-# Use timesmith's ExpandingWindowSplit and SlidingWindowSplit if available
-try:
-    from timesmith.eval import (
-        ExpandingWindowSplit as TimesmithExpandingWindowSplit,
-        SlidingWindowSplit as TimesmithSlidingWindowSplit,
-    )
-    ExpandingWindowSplit = TimesmithExpandingWindowSplit  # type: ignore
-    SlidingWindowSplit = TimesmithSlidingWindowSplit  # type: ignore
-except (ImportError, AttributeError):
-    # Fallback to our own implementation
-    class ExpandingWindowSplit:
-        """Expanding window splitter for time series backtesting.
+# Use our own implementation since timesmith's API differs
+# (timesmith's ExpandingWindowSplit has different parameter names)
+class ExpandingWindowSplit:
+    """Expanding window splitter for time series backtesting.
 
-        Attributes:
-            n_splits: Number of splits to generate
-            min_train_size: Minimum training set size
-        """
+    Attributes:
+        n_splits: Number of splits to generate
+        min_train_size: Minimum training set size
+    """
 
-        def __init__(self, n_splits: int = 5, min_train_size: int = 10) -> None:
+    def __init__(self, n_splits: int = 5, min_train_size: int = 10) -> None:
             """Initialize splitter.
 
             Args:
