@@ -1,0 +1,177 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anomsmith"
+version = "0.0.1"
+description = "A strict 4-layer architecture for anomaly detection"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.20.0",
+    "pandas>=1.3.0",
+    "scikit-learn>=1.0.0",
+    "timesmith>=0.1.0",
+]
+authors = [
+  { name = "Kyle T. Jones", email = "kyletjones@gmail.com" }
+]
+maintainers = [
+  { name = "Kyle T. Jones", email = "kyletjones@gmail.com" }
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+]
+deep = [
+    "tensorflow>=2.8.0",
+    "torch>=1.11.0",
+]
+wavelet = [
+    "PyWavelets>=1.3.0",
+]
+plots = [
+    "plotsmith>=0.1.0",
+]
+all = [
+    "anomsmith[deep,wavelet,plots]",
+]
+
+
+
+
+[project.urls]
+Homepage = "https://github.com/kylejones200/anomsmith"
+Documentation = "https://anomsmith.readthedocs.io/"
+Repository = "https://github.com/kylejones200/anomsmith"
+"Bug Tracker" = "https://github.com/kylejones200/anomsmith/issues"
+Changelog = "https://github.com/kylejones200/anomsmith/blob/main/CHANGELOG.md"
+
+[project.scripts]
+dca = "anomsmith.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["*"]
+exclude = ["ndic_raw*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = '''
+(
+  /(
+      \.eggs
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | venv
+  )/
+)
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+show_error_codes = true
+pretty = true
+disable_error_code = ["import-untyped"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = [
+  "-v",
+  "-ra",
+  "--tb=short",
+  "--strict-markers",
+  "--strict-config",
+  "--color=yes",
+  "--cov=anomsmith",
+  "--cov-report=term-missing",
+  "--cov-report=html",
+  "--disable-warnings",
+  "--durations=10",
+  "--maxfail=5",
+]
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "integration: marks tests as integration tests",
+  "unit: marks tests as unit tests",
+]
+filterwarnings = [
+  "ignore::UserWarning",
+  "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["anomsmith"]
+omit = [
+  "*/tests/*",
+  "*/test_*.py",
+  "*/__pycache__/*",
+  "*/venv/*",
+  "*/.venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "@abstractmethod",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    ".eggs",
+    "*.egg",
+    "build",
+    "dist",
+    "examples",
+    "benchmarks",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = [
+    "E402",  # Module level import not at top (if intentional)
+    "E501",  # Line too long (handled by formatter)
+    "N806",  # Variable should be lowercase (if using stats conventions)
+    "N803",  # Argument should be lowercase (if using stats conventions)
+]
