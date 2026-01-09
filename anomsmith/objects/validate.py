@@ -7,7 +7,12 @@ import numpy as np
 import pandas as pd
 
 try:
-    from timesmith.typing import PanelLike, SeriesLike, assert_panel_like, assert_series_like
+    from timesmith.typing import (
+        PanelLike,
+        SeriesLike,
+        assert_panel as timesmith_assert_panel,
+        assert_series as timesmith_assert_series,
+    )
 except ImportError:
     raise ImportError(
         "timesmith is required. Install with: pip install timesmith or pip install anomsmith[timesmith]"
@@ -29,7 +34,7 @@ def assert_series(series: SeriesLike) -> None:
     Raises:
         ValueError: If series is invalid
     """
-    assert_series_like(series)
+    timesmith_assert_series(series)
 
 
 def assert_panel(panel: PanelLike) -> None:
@@ -41,7 +46,7 @@ def assert_panel(panel: PanelLike) -> None:
     Raises:
         ValueError: If panel is invalid
     """
-    assert_panel_like(panel)
+    timesmith_assert_panel(panel)
 
 
 def assert_aligned(

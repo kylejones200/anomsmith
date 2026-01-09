@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 try:
-    from timesmith.typing import PanelLike, SeriesLike, assert_series_like, assert_panel_like
+    from timesmith.typing import PanelLike, SeriesLike, assert_series, assert_panel
 except ImportError:
     raise ImportError(
         "timesmith is required. Install with: pip install timesmith or pip install anomsmith[timesmith]"
@@ -33,7 +33,7 @@ def make_series_view(y: Union[pd.Series, np.ndarray, SeriesLike]) -> SeriesLike:
     """
     # If already a SeriesLike, validate and return
     if isinstance(y, (pd.Series, pd.DataFrame)):
-        assert_series_like(y)
+        assert_series(y)
         # Convert DataFrame to Series if needed
         if isinstance(y, pd.DataFrame):
             if y.shape[1] != 1:
@@ -47,7 +47,7 @@ def make_series_view(y: Union[pd.Series, np.ndarray, SeriesLike]) -> SeriesLike:
             raise ValueError(f"Input must be 1D, got shape {y.shape}")
         index = pd.RangeIndex(start=0, stop=len(y))
         series = pd.Series(y, index=index)
-        assert_series_like(series)
+        assert_series(series)
         return series
     
     raise ValueError(f"Expected pd.Series, np.ndarray, or SeriesLike, got {type(y)}")
@@ -78,7 +78,7 @@ def make_panel_view(
             y = y.set_index(entity_key) if not y.index.equals(entity_key) else y
         if time_index is not None:
             y = y.reindex(columns=time_index) if not y.columns.equals(time_index) else y
-        assert_panel_like(y)
+        assert_panel(y)
         return y
     
     # Convert numpy array to DataFrame
@@ -90,7 +90,7 @@ def make_panel_view(
         if time_index is None:
             time_index = pd.RangeIndex(start=0, stop=y.shape[1])
         df = pd.DataFrame(y, index=entity_key, columns=time_index)
-        assert_panel_like(df)
+        assert_panel(df)
         return df
     
     raise ValueError(f"Expected pd.DataFrame, np.ndarray, or PanelLike, got {type(y)}")
