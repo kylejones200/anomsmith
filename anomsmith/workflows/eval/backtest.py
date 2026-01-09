@@ -35,88 +35,90 @@ class ExpandingWindowSplit:
     """
 
     def __init__(self, n_splits: int = 5, min_train_size: int = 10) -> None:
-            """Initialize splitter.
+        """Initialize splitter.
 
-            Args:
-                n_splits: Number of splits to generate
-                min_train_size: Minimum training set size
-            """
-            self.n_splits = n_splits
-            self.min_train_size = min_train_size
-
-        def split(self, y: Union[pd.Series, np.ndarray, "SeriesLike"]) -> list[tuple[int, int]]:
-            """Generate train/test cutoff points.
-
-            Args:
-                y: Time series to split
-
-            Returns:
-                List of (train_end, test_start) tuples
-            """
-            n = len(y)
-            if n < self.min_train_size + self.n_splits:
-                raise ValueError(
-                    f"Series length ({n}) must be at least "
-                    f"{self.min_train_size + self.n_splits}"
-                )
-
-            # Vectorized cutoff generation
-            step = (n - self.min_train_size) // self.n_splits
-            indices = np.arange(self.n_splits)
-            train_ends = self.min_train_size + indices * step
-            # Convert to list of tuples as expected by consumers
-            cutoffs = [(int(te), int(te)) for te in train_ends]
-
-            return cutoffs
-
-    # SlidingWindowSplit not available from timesmith, define our own if needed
-    class SlidingWindowSplit:
-        """Sliding window splitter for time series backtesting.
-        
-        Similar to ExpandingWindowSplit but uses fixed-size windows.
+        Args:
+            n_splits: Number of splits to generate
+            min_train_size: Minimum training set size
         """
-        def __init__(self, n_splits: int = 5, train_size: int = 20, test_size: int = 10) -> None:
-            """Initialize splitter.
-            
-            Args:
-                n_splits: Number of splits to generate
-                train_size: Size of training window
-                test_size: Size of test window
-            """
-            self.n_splits = n_splits
-            self.train_size = train_size
-            self.test_size = test_size
+        self.n_splits = n_splits
+        self.min_train_size = min_train_size
+
+    def split(self, y: Union[pd.Series, np.ndarray, "SeriesLike"]) -> list[tuple[int, int]]:
+        """Generate train/test cutoff points.
+
+        Args:
+            y: Time series to split
+
+        Returns:
+            List of (train_end, test_start) tuples
+        """
+        n = len(y)
+        if n < self.min_train_size + self.n_splits:
+            raise ValueError(
+                f"Series length ({n}) must be at least "
+                f"{self.min_train_size + self.n_splits}"
+            )
+
+        # Vectorized cutoff generation
+        step = (n - self.min_train_size) // self.n_splits
+        indices = np.arange(self.n_splits)
+        train_ends = self.min_train_size + indices * step
+        # Convert to list of tuples as expected by consumers
+        cutoffs = [(int(te), int(te)) for te in train_ends]
+
+        return cutoffs
+
+
+# SlidingWindowSplit not available from timesmith, define our own if needed
+class SlidingWindowSplit:
+    """Sliding window splitter for time series backtesting.
+    
+    Similar to ExpandingWindowSplit but uses fixed-size windows.
+    """
+    
+    def __init__(self, n_splits: int = 5, train_size: int = 20, test_size: int = 10) -> None:
+        """Initialize splitter.
         
-        def split(self, y: Union[pd.Series, np.ndarray, "SeriesLike"]) -> list[tuple[int, int]]:
-            """Generate train/test cutoff points.
+        Args:
+            n_splits: Number of splits to generate
+            train_size: Size of training window
+            test_size: Size of test window
+        """
+        self.n_splits = n_splits
+        self.train_size = train_size
+        self.test_size = test_size
+    
+    def split(self, y: Union[pd.Series, np.ndarray, "SeriesLike"]) -> list[tuple[int, int]]:
+        """Generate train/test cutoff points.
+        
+        Args:
+            y: Time series to split
             
-            Args:
-                y: Time series to split
-                
-            Returns:
-                List of (train_end, test_start) tuples
-            """
-            n = len(y)
-            if n < self.train_size + self.test_size:
-                raise ValueError(
-                    f"Series length ({n}) must be at least "
-                    f"{self.train_size + self.test_size}"
-                )
-            
-            # Generate sliding windows (vectorized)
-            max_start = n - self.train_size - self.test_size
-            step = max(1, max_start // self.n_splits) if max_start > 0 else 1
-            
-            # Vectorized: compute all train starts at once
-            indices = np.arange(self.n_splits)
-            train_starts = np.minimum(indices * step, max_start)
-            train_ends = train_starts + self.train_size
-            test_starts = train_ends  # test starts where train ends
-            
-            # Convert to list of tuples as expected by consumers
-            cutoffs = [(int(te), int(ts)) for te, ts in zip(train_ends, test_starts)]
-            
-            return cutoffs
+        Returns:
+            List of (train_end, test_start) tuples
+        """
+        n = len(y)
+        if n < self.train_size + self.test_size:
+            raise ValueError(
+                f"Series length ({n}) must be at least "
+                f"{self.train_size + self.test_size}"
+            )
+        
+        # Generate sliding windows (vectorized)
+        max_start = n - self.train_size - self.test_size
+        step = max(1, max_start // self.n_splits) if max_start > 0 else 1
+        
+        # Vectorized: compute all train starts at once
+        indices = np.arange(self.n_splits)
+        train_starts = np.minimum(indices * step, max_start)
+        train_ends = train_starts + self.train_size
+        test_starts = train_ends  # test starts where train ends
+        
+        # Convert to list of tuples as expected by consumers
+        cutoffs = [(int(te), int(ts)) for te, ts in zip(train_ends, test_starts)]
+        
+        return cutoffs
 
 
 def backtest_detector(
