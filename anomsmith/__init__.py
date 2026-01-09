@@ -1,4 +1,4 @@
-"""Anomsmith: A strict 4-layer architecture for anomaly detection."""
+"""Anomsmith: Anomaly detection workflows that turn time series signals into actionable decisions."""
 
 from anomsmith.primitives.base import BaseDetector, BaseScorer
 from anomsmith.primitives.detectors.ml import (

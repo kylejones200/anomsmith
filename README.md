@@ -7,7 +7,7 @@
 [![Documentation](https://readthedocs.org/projects/anomsmith/badge/?version=latest)](https://anomsmith.readthedocs.io/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A strict 4-layer architecture for anomaly detection with hard boundaries between layers.
+Anomaly detection workflows that turn time series signals into actionable decisions.
 
 ## Architecture
 

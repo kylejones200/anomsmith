@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "anomsmith"
 version = "0.0.2"
-description = "A strict 4-layer architecture for anomaly detection"
+description = "Anomaly detection workflows that turn time series signals into actionable decisions"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.9"
