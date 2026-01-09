@@ -43,12 +43,12 @@ except (ImportError, AttributeError):
         """
 
         def __init__(self, n_splits: int = 5, min_train_size: int = 10) -> None:
-        """Initialize splitter.
+            """Initialize splitter.
 
-        Args:
-            n_splits: Number of splits to generate
-            min_train_size: Minimum training set size
-        """
+            Args:
+                n_splits: Number of splits to generate
+                min_train_size: Minimum training set size
+            """
             self.n_splits = n_splits
             self.min_train_size = min_train_size
 
