@@ -6,17 +6,26 @@ All validators raise ValueError with clear messages.
 import numpy as np
 import pandas as pd
 
+# Import types from timesmith.typing (single source of truth)
+from timesmith.typing import PanelLike, SeriesLike
+
+# Import validators from timesmith.typing.validators (or fallback to timesmith.typing)
 try:
-    from timesmith.typing import (
-        PanelLike,
-        SeriesLike,
-        assert_panel as timesmith_assert_panel,
-        assert_series as timesmith_assert_series,
+    from timesmith.typing.validators import (
+        assert_panel_like as timesmith_assert_panel,
+        assert_series_like as timesmith_assert_series,
     )
 except ImportError:
-    raise ImportError(
-        "timesmith is required. Install with: pip install timesmith or pip install anomsmith[timesmith]"
-    )
+    # Fallback: validators might be in timesmith.typing directly
+    try:
+        from timesmith.typing import (
+            assert_panel as timesmith_assert_panel,
+            assert_series as timesmith_assert_series,
+        )
+    except ImportError:
+        raise ImportError(
+            "timesmith is required. Install with: pip install timesmith or pip install anomsmith[timesmith]"
+        )
 
 from anomsmith.objects.views import LabelView, ScoreView
 

@@ -5,12 +5,20 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
+# Import types from timesmith.typing (single source of truth)
+from timesmith.typing import PanelLike, SeriesLike
+
+# Import validators from timesmith.typing.validators (or fallback to timesmith.typing)
 try:
-    from timesmith.typing import PanelLike, SeriesLike, assert_series, assert_panel
+    from timesmith.typing.validators import assert_series_like as assert_series, assert_panel_like as assert_panel
 except ImportError:
-    raise ImportError(
-        "timesmith is required. Install with: pip install timesmith or pip install anomsmith[timesmith]"
-    )
+    # Fallback: validators might be in timesmith.typing directly
+    try:
+        from timesmith.typing import assert_series, assert_panel
+    except ImportError:
+        raise ImportError(
+            "timesmith is required. Install with: pip install timesmith or pip install anomsmith[timesmith]"
+        )
 
 from anomsmith.objects.validate import assert_monotonic_index
 
