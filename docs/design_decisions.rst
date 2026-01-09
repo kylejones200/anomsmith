@@ -1,4 +1,5 @@
-# Design Decisions
+Design Decisions
+================
 
 Anomsmith makes strong choices.
 

@@ -1,4 +1,5 @@
-# Architecture
+Architecture
+============
 
 Anomsmith follows a four layer architecture.
 
@@ -12,7 +13,7 @@ The fourth layer holds **workflows**. Workflows handle reality. They accept pand
 
 Each layer imports only from layers below it. This rule prevents leakage between scoring, decision logic, and evaluation.
 
-Anomsmith shares `SeriesLike` and `PanelLike` definitions with Timesmith. This allows anomaly detection to plug into forecasting, plotting, and domain workflows without translation code.
+Anomsmith shares ``SeriesLike`` and ``PanelLike`` definitions with Timesmith. This allows anomaly detection to plug into forecasting, plotting, and domain workflows without translation code.
 
 The architecture favors clarity over cleverness. It allows many detectors to coexist without collapsing into a single abstraction.
 
