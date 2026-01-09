@@ -111,16 +111,18 @@ except (ImportError, AttributeError):
                     f"{self.train_size + self.test_size}"
                 )
             
-            # Generate sliding windows
+            # Generate sliding windows (vectorized)
             max_start = n - self.train_size - self.test_size
             step = max(1, max_start // self.n_splits) if max_start > 0 else 1
             
-            cutoffs = []
-            for i in range(self.n_splits):
-                train_start = min(i * step, max_start)
-                train_end = train_start + self.train_size
-                test_start = train_end
-                cutoffs.append((train_end, test_start))
+            # Vectorized: compute all train starts at once
+            indices = np.arange(self.n_splits)
+            train_starts = np.minimum(indices * step, max_start)
+            train_ends = train_starts + self.train_size
+            test_starts = train_ends  # test starts where train ends
+            
+            # Convert to list of tuples as expected by consumers
+            cutoffs = [(int(te), int(ts)) for te, ts in zip(train_ends, test_starts)]
             
             return cutoffs
 
@@ -150,7 +152,14 @@ def backtest_detector(
     splitter = ExpandingWindowSplit(n_splits=n_splits, min_train_size=min_train_size)
     cutoffs = splitter.split(y)
 
-    results = []
+    # Pre-allocate arrays for results (faster than list.append())
+    n_splits_actual = len(cutoffs)
+    folds = np.arange(n_splits_actual)
+    precisions = np.full(n_splits_actual, np.nan, dtype=float)
+    recalls = np.full(n_splits_actual, np.nan, dtype=float)
+    f1s = np.full(n_splits_actual, np.nan, dtype=float)
+    avg_run_lengths = np.full(n_splits_actual, np.nan, dtype=float)
+
     for fold, (train_end, test_start) in enumerate(cutoffs):
         # Split data
         y_train = y.iloc[:train_end]
@@ -162,30 +171,26 @@ def backtest_detector(
         # Detect on test data
         result_df = detect_anomalies(y_test, detector, threshold_rule)
 
+        # Always compute avg_run_length (doesn't require labels)
+        avg_run_lengths[fold] = average_run_length(result_df["flag"].values)
+
         if labels is not None:
             # Align labels
             labels_test = labels.reindex(y_test.index, fill_value=0).values
             labels_test = (labels_test != 0).astype(int)
 
-            precision = compute_precision(labels_test, result_df["flag"].values)
-            recall = compute_recall(labels_test, result_df["flag"].values)
-            f1 = compute_f1(labels_test, result_df["flag"].values)
-            avg_run_length = average_run_length(result_df["flag"].values)
-        else:
-            precision = np.nan
-            recall = np.nan
-            f1 = np.nan
-            avg_run_length = average_run_length(result_df["flag"].values)
+            precisions[fold] = compute_precision(labels_test, result_df["flag"].values)
+            recalls[fold] = compute_recall(labels_test, result_df["flag"].values)
+            f1s[fold] = compute_f1(labels_test, result_df["flag"].values)
 
-        results.append(
-            {
-                "fold": fold,
-                "precision": precision,
-                "recall": recall,
-                "f1": f1,
-                "avg_run_length": avg_run_length,
-            }
-        )
-
-    return pd.DataFrame(results)
+    # Build DataFrame from pre-allocated arrays (vectorized)
+    return pd.DataFrame(
+        {
+            "fold": folds,
+            "precision": precisions,
+            "recall": recalls,
+            "f1": f1s,
+            "avg_run_length": avg_run_lengths,
+        }
+    )
 
