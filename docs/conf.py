@@ -18,14 +18,15 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
+    "myst_parser",  # Enable markdown support
 ]
 
-# Try to load myst_parser if available
-try:
-    import myst_parser
-    extensions.append("myst_parser")
-except ImportError:
-    pass
+# Myst parser settings
+myst_enable_extensions = [
+    "colon_fence",
+    "deflist",
+]
+myst_heading_anchors = 3
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
