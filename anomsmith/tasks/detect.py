@@ -1,7 +1,7 @@
 """Detection task definitions and runners."""
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 import pandas as pd
@@ -24,7 +24,6 @@ try:
     DetectTask = TimesmithDetectTask  # type: ignore
 except (ImportError, AttributeError):
     # Fallback to our own DetectTask
-    from typing import Union
     _SeriesLikeType = Union[pd.Series, np.ndarray] if SeriesLike is None else Union[pd.Series, np.ndarray, SeriesLike]
     
     @dataclass
@@ -47,7 +46,7 @@ except (ImportError, AttributeError):
 
 
 def run_scoring(
-    y: pd.Series | np.ndarray | "SeriesLike",
+    y: Union[pd.Series, np.ndarray, "SeriesLike"],
     scorer: BaseScorer,
 ) -> ScoreView:
     """Run scoring task with a scorer.
@@ -74,7 +73,7 @@ def run_scoring(
 
 
 def run_detection(
-    y: pd.Series | np.ndarray | "SeriesLike",
+    y: Union[pd.Series, np.ndarray, "SeriesLike"],
     detector: BaseDetector | BaseScorer,
 ) -> tuple[LabelView, ScoreView]:
     """Run detection task with a detector or scorer.
