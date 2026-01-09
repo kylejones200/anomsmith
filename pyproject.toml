@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "anomsmith"
-version = "0.0.1"
+version = "0.0.2"
 description = "A strict 4-layer architecture for anomaly detection"
 readme = "README.md"
 license = "MIT"

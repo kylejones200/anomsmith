@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "Anomsmith"
 copyright = "2024, Kyle T. Jones"
 author = "Kyle T. Jones"
-release = "0.0.1"
+release = "0.0.2"
 
 # General configuration
 extensions = [
