@@ -35,7 +35,8 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 # Autodoc settings
-autodoc_mock_imports = ["sklearn", "numpy", "pandas"]
+# Note: We don't mock timesmith since it's a required dependency
+autodoc_mock_imports = []
 autodoc_default_options = {
     "members": True,
     "undoc-members": True,
