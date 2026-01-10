@@ -91,3 +91,4 @@ class TestApplyThreshold:
 
         assert label_view.index.equals(score_view.index)
 
+

@@ -12,13 +12,31 @@ from anomsmith.workflows.eval.metrics import (
     compute_recall,
 )
 
-__all__ = [
-    "compute_precision",
-    "compute_recall",
-    "compute_f1",
-    "average_run_length",
-    "ExpandingWindowSplit",
-    "SlidingWindowSplit",
-    "backtest_detector",
-]
+try:
+    from anomsmith.workflows.eval.survival_metrics import (
+        compute_concordance_index,
+        evaluate_survival_model,
+    )
+
+    __all__ = [
+        "compute_precision",
+        "compute_recall",
+        "compute_f1",
+        "average_run_length",
+        "ExpandingWindowSplit",
+        "SlidingWindowSplit",
+        "backtest_detector",
+        "compute_concordance_index",
+        "evaluate_survival_model",
+    ]
+except ImportError:
+    __all__ = [
+        "compute_precision",
+        "compute_recall",
+        "compute_f1",
+        "average_run_length",
+        "ExpandingWindowSplit",
+        "SlidingWindowSplit",
+        "backtest_detector",
+    ]
 

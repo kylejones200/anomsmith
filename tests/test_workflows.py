@@ -69,3 +69,4 @@ class TestDetectAnomalies:
         assert "flag" in result.columns
         assert np.all(np.isin(result["flag"].values, [0, 1]))
 
+

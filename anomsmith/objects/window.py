@@ -26,3 +26,4 @@ class WindowSpec:
         if self.step <= 0:
             raise ValueError(f"Window step must be positive, got {self.step}")
 
+

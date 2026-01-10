@@ -52,3 +52,4 @@ def extract_index_and_values(y: Union[np.ndarray, pd.Series]) -> tuple[pd.Index,
     else:
         return pd.RangeIndex(start=0, stop=len(y)), y
 
+

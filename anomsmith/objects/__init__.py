@@ -6,6 +6,13 @@ No domain libraries (sklearn, matplotlib, etc.) are imported here.
 Only numpy and pandas are allowed.
 """
 
+from anomsmith.objects.health_state import (
+    Action,
+    ActionView,
+    HealthState,
+    HealthStateView,
+    PolicyResult,
+)
 from anomsmith.objects.views import (
     LabelView,
     PanelView,
@@ -26,6 +33,12 @@ try:
         "ScoreView",
         "LabelView",
         "WindowSpec",
+        # Health state objects
+        "HealthState",
+        "HealthStateView",
+        "Action",
+        "ActionView",
+        "PolicyResult",
     ]
 except ImportError:
     __all__ = [
@@ -34,5 +47,11 @@ except ImportError:
         "ScoreView",
         "LabelView",
         "WindowSpec",
+        # Health state objects
+        "HealthState",
+        "HealthStateView",
+        "Action",
+        "ActionView",
+        "PolicyResult",
     ]
 

@@ -75,3 +75,4 @@ def average_run_length(labels: np.ndarray) -> float:
     run_lengths = ends - starts
     return float(run_lengths.mean())
 
+

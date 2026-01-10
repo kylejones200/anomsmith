@@ -178,15 +178,20 @@ class PCADetector(BaseDetector):
             if self.mean_ is None or self.cov_ is None:
                 raise ValueError("PCA must be fitted before computing Mahalanobis distance.")
 
-            # Compute Mahalanobis distance
-            diff = X_pca - self.mean_
+            # Vectorized Mahalanobis distance: sqrt((x - mu)^T * Sigma^-1 * (x - mu))
+            diff = X_pca - self.mean_  # Shape: (n_samples, n_components)
+            
             try:
                 inv_cov = np.linalg.inv(self.cov_)
-                mahalanobis_dist = np.sqrt(np.sum(diff @ inv_cov * diff, axis=1))
             except np.linalg.LinAlgError:
                 # If covariance is singular, use pseudo-inverse
                 inv_cov = np.linalg.pinv(self.cov_)
-                mahalanobis_dist = np.sqrt(np.sum(diff @ inv_cov * diff, axis=1))
+
+            # Vectorized: compute quadratic form for all samples at once
+            # (diff @ inv_cov) * diff computes element-wise product, then sum over features
+            quad_form = (diff @ inv_cov) * diff  # Shape: (n_samples, n_components)
+            mahalanobis_dist = np.sqrt(np.sum(quad_form, axis=1))  # Shape: (n_samples,)
+            
             return mahalanobis_dist
 
         elif self.score_method == "both":
@@ -215,13 +220,18 @@ class PCADetector(BaseDetector):
         elif method == "mahalanobis":
             if self.mean_ is None or self.cov_ is None:
                 raise ValueError("PCA must be fitted before computing Mahalanobis distance.")
-            diff = X_pca - self.mean_
+            
+            # Vectorized Mahalanobis distance calculation
+            diff = X_pca - self.mean_  # Shape: (n_samples, n_components)
+            
             try:
                 inv_cov = np.linalg.inv(self.cov_)
-                return np.sqrt(np.sum(diff @ inv_cov * diff, axis=1))
             except np.linalg.LinAlgError:
                 inv_cov = np.linalg.pinv(self.cov_)
-                return np.sqrt(np.sum(diff @ inv_cov * diff, axis=1))
+
+            # Vectorized quadratic form computation
+            quad_form = (diff @ inv_cov) * diff  # Shape: (n_samples, n_components)
+            return np.sqrt(np.sum(quad_form, axis=1))  # Shape: (n_samples,)
         else:
             raise ValueError(f"Unknown method: {method}")
 

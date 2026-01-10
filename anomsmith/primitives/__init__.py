@@ -11,6 +11,11 @@ from anomsmith.primitives.base import (
     BaseObject,
     BaseScorer,
 )
+from anomsmith.primitives.model_persistence import (
+    export_model_for_sagemaker,
+    load_model,
+    save_model,
+)
 from anomsmith.primitives.scaling import robust_zscore
 from anomsmith.primitives.thresholding import ThresholdRule, apply_threshold
 
@@ -22,5 +27,9 @@ __all__ = [
     "ThresholdRule",
     "apply_threshold",
     "robust_zscore",
+    "save_model",
+    "load_model",
+    "export_model_for_sagemaker",
 ]
+
 

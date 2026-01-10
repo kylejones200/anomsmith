@@ -89,3 +89,6 @@ Deep-AR for Production Forecasting.md
 # Untracked experimental code
 _untracked/
 wip/
+
+# Archive folder for intermediate documentation
+.archive/

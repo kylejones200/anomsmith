@@ -37,8 +37,25 @@ wavelet = [
 plots = [
     "plotsmith>=0.1.0",
 ]
+aws = [
+    "boto3>=1.26.0",
+]
+stats = [
+    "statsmodels>=0.13.0",
+    "scipy>=1.9.0",
+]
+survival = [
+    "lifelines>=0.27.0",
+    "pycox>=0.2.3",
+    "torch>=1.11.0",
+]
+ordinal = [
+    "mord>=0.6",
+    "lightgbm>=3.3.0",
+    "coral-pytorch>=0.3.0",
+]
 all = [
-    "anomsmith[deep,wavelet,plots]",
+    "anomsmith[deep,wavelet,plots,aws,stats,survival,ordinal]",
 ]
 
 
