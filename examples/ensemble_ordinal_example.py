@@ -421,18 +421,39 @@ def main() -> None:
     logger.info("=" * 70)
 
     try:
-        # For stacking, use aligned predictions as features for meta-model
-        # Stack predictions into feature matrix (as in article)
-        X_stack = np.column_stack([base_preds_aligned[k] for k in sorted(base_preds_aligned.keys())])
+        # For stacking, we need predictions from TRAIN data to train meta-model
+        # Get base model predictions on TRAIN data for meta-model training
+        base_preds_train = {}
+        for model_name, model in base_models.items():
+            if model_name == "CORNLSTM":
+                # LSTM uses sequences (already created above, stored in sequences_train)
+                pred_train = model.predict(sequences_train)
+            else:
+                # Other models use X_train
+                pred_train = model.predict(X_train)
+            base_preds_train[model_name] = pred_train
 
-        # Fit meta-model on stacked predictions (in practice, use cross-validation with train data)
+        # Align train predictions
+        train_min_len = min(len(p) for p in base_preds_train.values())
+        base_preds_train_aligned = {
+            k: v[:train_min_len] if len(v) >= train_min_len else np.pad(v, (0, train_min_len - len(v)), mode="edge")
+            for k, v in base_preds_train.items()
+        }
+        y_train_aligned = y_train.values[:train_min_len]
+
+        # Stack train predictions for meta-model training
+        X_stack_train = np.column_stack([base_preds_train_aligned[k] for k in sorted(base_preds_train_aligned.keys())])
+
+        # Fit meta-model on TRAIN data predictions (proper train/test split)
         from sklearn.linear_model import LogisticRegression
 
         meta_model = LogisticRegression(solver="lbfgs", max_iter=500, random_state=42)
-        meta_model.fit(X_stack, y_test_aligned)
+        meta_model.fit(X_stack_train, y_train_aligned)
 
-        # Predict using meta-model
-        y_pred_stack = meta_model.predict(X_stack)
+        # Now predict on test data using stacked test predictions
+        X_stack_test = np.column_stack([base_preds_aligned[k] for k in sorted(base_preds_aligned.keys())])
+        y_pred_stack = meta_model.predict(X_stack_test)
+        
         acc_stack = accuracy_score(y_test_aligned, y_pred_stack)
         mae_stack = mean_absolute_error(y_test_aligned, y_pred_stack)
 

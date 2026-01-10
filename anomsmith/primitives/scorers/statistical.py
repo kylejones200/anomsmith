@@ -203,7 +203,7 @@ class IQRScorer(BaseScorer):
             scale = self.iqr_.max() + 1e-10
             scores = np.where(is_outlier, outlier_scores / scale, normal_scores / scale)
         else:
-            # 1D case: simple binary scoring
+            # 1D case: simple binary scoring (vectorized)
             scores = np.where(outlier_mask, 1.0, 0.0).astype(float)
 
         return ScoreView(index=index, scores=scores)

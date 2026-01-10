@@ -212,6 +212,9 @@ class LOFDetector(BaseDetector):
     def score(self, y: Union[np.ndarray, pd.Series]) -> ScoreView:
         """Score anomalies.
 
+        Uses score_samples() method from fitted LOF model with novelty=True
+        to compute scores for new data without data leakage.
+
         Args:
             y: Time series to score
 
@@ -224,13 +227,10 @@ class LOFDetector(BaseDetector):
         X_data = prepare_input_data(values)
         X_scaled = self.scaler_.transform(X_data)
 
-        # LOF model must be refitted for scoring new data
-        model = LocalOutlierFactor(
-            contamination=self.contamination, n_neighbors=self.n_neighbors, n_jobs=self.n_jobs
-        )
-        model.fit(X_scaled)
-        scores = model.negative_outlier_factor_
-        # Invert so higher scores = more anomalous
+        # Use score_samples() from fitted novelty=True model (no refitting = no leakage)
+        # score_samples returns negative outlier factor, where lower = more anomalous
+        scores = self.model_.score_samples(X_scaled)  # type: ignore
+        # Invert so higher scores = more anomalous (consistent with other detectors)
         scores = -scores
 
         return ScoreView(index=index, scores=scores)

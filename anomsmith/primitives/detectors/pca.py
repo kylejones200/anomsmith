@@ -62,6 +62,11 @@ class PCADetector(BaseDetector):
         self.threshold_: float | None = None
         self.mean_: np.ndarray | None = None
         self.cov_: np.ndarray | None = None
+        # Normalization parameters for "both" method (stored during fit to avoid leakage)
+        self.recon_min_: float | None = None
+        self.recon_max_: float | None = None
+        self.maha_min_: float | None = None
+        self.maha_max_: float | None = None
         super().__init__(
             n_components=n_components,
             score_method=score_method,
@@ -111,6 +116,15 @@ class PCADetector(BaseDetector):
         # Compute threshold based on training data
         scores = self._compute_scores(X_scaled, X_pca)
         self.threshold_ = np.percentile(scores, 100 * (1 - self.contamination))
+
+        # Store normalization parameters for "both" method to avoid test data leakage
+        if self.score_method == "both":
+            recon_scores = self._compute_scores_with_method(X_scaled, X_pca, "reconstruction")
+            maha_scores = self._compute_scores_with_method(X_scaled, X_pca, "mahalanobis")
+            self.recon_min_ = float(recon_scores.min())
+            self.recon_max_ = float(recon_scores.max())
+            self.maha_min_ = float(maha_scores.min())
+            self.maha_max_ = float(maha_scores.max())
 
         self._fitted = True
         logger.debug(f"Fitted PCADetector: threshold={self.threshold_}")
@@ -198,13 +212,38 @@ class PCADetector(BaseDetector):
             # Average of both methods
             recon_scores = self._compute_scores_with_method(X_scaled, X_pca, "reconstruction")
             maha_scores = self._compute_scores_with_method(X_scaled, X_pca, "mahalanobis")
-            # Normalize and average
-            recon_norm = (recon_scores - recon_scores.min()) / (
-                recon_scores.max() - recon_scores.min() + 1e-10
-            )
-            maha_norm = (maha_scores - maha_scores.min()) / (
-                maha_scores.max() - maha_scores.min() + 1e-10
-            )
+            # Normalize using training data statistics (stored during fit) to avoid leakage
+            # Normalize using training data statistics (stored during fit) to avoid leakage
+            if hasattr(self, 'recon_min_') and hasattr(self, 'recon_max_') and self.recon_min_ is not None and self.recon_max_ is not None:
+                recon_norm = (recon_scores - self.recon_min_) / (
+                    self.recon_max_ - self.recon_min_ + 1e-10
+                )
+            else:
+                # Fallback: use current scores (acceptable for single-batch scoring, but warn)
+                logger.warning(
+                    "Normalization parameters not found. Using current score statistics. "
+                    "This may cause slight data leakage if used across multiple batches. "
+                    "Re-fit the model to store normalization parameters."
+                )
+                recon_norm = (recon_scores - recon_scores.min()) / (
+                    recon_scores.max() - recon_scores.min() + 1e-10
+                )
+            
+            if hasattr(self, 'maha_min_') and hasattr(self, 'maha_max_') and self.maha_min_ is not None and self.maha_max_ is not None:
+                maha_norm = (maha_scores - self.maha_min_) / (
+                    self.maha_max_ - self.maha_min_ + 1e-10
+                )
+            else:
+                # Fallback: use current scores (acceptable for single-batch scoring, but warn)
+                logger.warning(
+                    "Normalization parameters not found. Using current score statistics. "
+                    "This may cause slight data leakage if used across multiple batches. "
+                    "Re-fit the model to store normalization parameters."
+                )
+                maha_norm = (maha_scores - maha_scores.min()) / (
+                    maha_scores.max() - maha_scores.min() + 1e-10
+                )
+            
             return (recon_norm + maha_norm) / 2
 
         else:

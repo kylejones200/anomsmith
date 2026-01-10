@@ -92,12 +92,14 @@ class ChangePointDetector(BaseDetector):
         scores = np.zeros(n)
 
         # Vectorized computation using pandas rolling for efficiency
+        # Use center=False to avoid future information leakage (causal detection)
         # Convert to Series for rolling operations
         series = pd.Series(values)
         
-        # Compute rolling statistics (vectorized)
-        rolling_mean = series.rolling(window=self.window_size, center=True, min_periods=1).mean()
-        rolling_std = series.rolling(window=self.window_size, center=True, min_periods=1).std()
+        # Compute rolling statistics (vectorized, causal - no future information)
+        # center=False ensures we only use past/current values, not future
+        rolling_mean = series.rolling(window=self.window_size, center=False, min_periods=1).mean()
+        rolling_std = series.rolling(window=self.window_size, center=False, min_periods=1).std()
         # Handle zero std (avoid division by zero)
         rolling_std = rolling_std.fillna(1.0).replace(0.0, 1.0).values
 
