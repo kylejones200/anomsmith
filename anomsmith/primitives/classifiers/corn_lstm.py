@@ -44,83 +44,89 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Only define PyTorch-dependent classes if PyTorch is available
+if TORCH_AVAILABLE:
+    class SequenceDataset(Dataset):  # type: ignore
+        """Dataset for time series sequences."""
 
-class SequenceDataset(Dataset):
-    """Dataset for time series sequences."""
+        def __init__(self, sequences: np.ndarray, labels: np.ndarray):
+            """Initialize sequence dataset.
 
-    def __init__(self, sequences: np.ndarray, labels: np.ndarray):
-        """Initialize sequence dataset.
+            Args:
+                sequences: Array of shape (n_samples, seq_len, n_features)
+                labels: Array of shape (n_samples,) with ordinal labels (0, 1, 2)
+            """
+            self.X = torch.tensor(sequences, dtype=torch.float32)  # type: ignore
+            self.y = torch.tensor(labels, dtype=torch.long)  # type: ignore
 
-        Args:
-            sequences: Array of shape (n_samples, seq_len, n_features)
-            labels: Array of shape (n_samples,) with ordinal labels (0, 1, 2)
-        """
-        self.X = torch.tensor(sequences, dtype=torch.float32)  # type: ignore
-        self.y = torch.tensor(labels, dtype=torch.long)  # type: ignore
+        def __len__(self) -> int:
+            """Return dataset size."""
+            return len(self.X)
 
-    def __len__(self) -> int:
-        """Return dataset size."""
-        return len(self.X)
-
-    def __getitem__(self, idx: int) -> tuple:
-        """Get item by index."""
-        return self.X[idx], self.y[idx]
-
-
-class LSTMBackbone(nn.Module):  # type: ignore
-    """LSTM backbone for sequence processing."""
-
-    def __init__(self, input_size: int = 21, hidden_size: int = 64):
-        """Initialize LSTM backbone.
-
-        Args:
-            input_size: Number of features per timestep
-            hidden_size: Number of LSTM hidden units
-        """
-        super().__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)  # type: ignore
-        self.hidden_size = hidden_size
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
-        """Forward pass.
-
-        Args:
-            x: Input tensor of shape (batch, seq_len, input_size)
-
-        Returns:
-            Hidden state of shape (batch, hidden_size)
-        """
-        _, (h, _) = self.lstm(x)  # type: ignore
-        return h[-1]  # Return last hidden state
+        def __getitem__(self, idx: int) -> tuple:
+            """Get item by index."""
+            return self.X[idx], self.y[idx]
 
 
-class CORNModel(nn.Module):  # type: ignore
-    """CORN (Continuous Ordinal Regression Networks) model."""
+    class LSTMBackbone(nn.Module):  # type: ignore
+        """LSTM backbone for sequence processing."""
 
-    def __init__(self, input_size: int = 21, hidden_size: int = 64, num_classes: int = 3):
-        """Initialize CORN model.
+        def __init__(self, input_size: int = 21, hidden_size: int = 64):
+            """Initialize LSTM backbone.
 
-        Args:
-            input_size: Number of features per timestep
-            hidden_size: Number of LSTM hidden units
-            num_classes: Number of ordinal classes (default 3 for health states)
-        """
-        super().__init__()
-        self.backbone = LSTMBackbone(input_size, hidden_size)  # type: ignore
-        # CORN output: num_classes - 1 thresholds
-        self.out = nn.Linear(hidden_size, num_classes - 1)  # type: ignore
+            Args:
+                input_size: Number of features per timestep
+                hidden_size: Number of LSTM hidden units
+            """
+            super().__init__()
+            self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)  # type: ignore
+            self.hidden_size = hidden_size
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
-        """Forward pass.
+        def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
+            """Forward pass.
 
-        Args:
-            x: Input tensor of shape (batch, seq_len, input_size)
+            Args:
+                x: Input tensor of shape (batch, seq_len, input_size)
 
-        Returns:
-            Logits of shape (batch, num_classes - 1) for ordinal thresholds
-        """
-        features = self.backbone(x)
-        return self.out(features)
+            Returns:
+                Hidden state of shape (batch, hidden_size)
+            """
+            _, (h, _) = self.lstm(x)  # type: ignore
+            return h[-1]  # Return last hidden state
+
+
+    class CORNModel(nn.Module):  # type: ignore
+        """CORN (Continuous Ordinal Regression Networks) model."""
+
+        def __init__(self, input_size: int = 21, hidden_size: int = 64, num_classes: int = 3):
+            """Initialize CORN model.
+
+            Args:
+                input_size: Number of features per timestep
+                hidden_size: Number of LSTM hidden units
+                num_classes: Number of ordinal classes (default 3 for health states)
+            """
+            super().__init__()
+            self.backbone = LSTMBackbone(input_size, hidden_size)  # type: ignore
+            # CORN output: num_classes - 1 thresholds
+            self.out = nn.Linear(hidden_size, num_classes - 1)  # type: ignore
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
+            """Forward pass.
+
+            Args:
+                x: Input tensor of shape (batch, seq_len, input_size)
+
+            Returns:
+                Logits of shape (batch, num_classes - 1) for ordinal thresholds
+            """
+            features = self.backbone(x)
+            return self.out(features)
+else:
+    # Dummy classes when PyTorch is not available (won't be used due to __init__ check)
+    SequenceDataset = None  # type: ignore
+    LSTMBackbone = None  # type: ignore
+    CORNModel = None  # type: ignore
 
 
 class CORNLSTMClassifier(BaseEstimator):
