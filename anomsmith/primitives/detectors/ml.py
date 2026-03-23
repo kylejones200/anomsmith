@@ -16,7 +16,10 @@ from sklearn.preprocessing import StandardScaler
 
 from anomsmith.objects.views import LabelView, ScoreView
 from anomsmith.primitives.base import BaseDetector
-from anomsmith.primitives.detectors._utils import extract_index_and_values, prepare_input_data
+from anomsmith.primitives.detectors._utils import (
+    extract_index_and_values,
+    prepare_input_data,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +101,9 @@ class IsolationForestDetector(BaseDetector):
         index, values = extract_index_and_values(y)
         X_data = prepare_input_data(values)
         X_scaled = self.scaler_.transform(X_data)
-        predictions = self.model_.predict(X_scaled)  # Returns -1 (anomaly) or 1 (normal)
+        predictions = self.model_.predict(
+            X_scaled
+        )  # Returns -1 (anomaly) or 1 (normal)
         # Convert to 0/1 (anomsmith convention)
         labels = (predictions == -1).astype(int)
 
@@ -203,7 +208,9 @@ class LOFDetector(BaseDetector):
         index, values = extract_index_and_values(y)
         X_data = prepare_input_data(values)
         X_scaled = self.scaler_.transform(X_data)
-        predictions = self.model_.predict(X_scaled)  # Returns -1 (anomaly) or 1 (normal)
+        predictions = self.model_.predict(
+            X_scaled
+        )  # Returns -1 (anomaly) or 1 (normal)
         # Convert to 0/1 (anomsmith convention)
         labels = (predictions == -1).astype(int)
 
@@ -308,7 +315,9 @@ class RobustCovarianceDetector(BaseDetector):
         index, values = extract_index_and_values(y)
         X_data = prepare_input_data(values)
         X_scaled = self.scaler_.transform(X_data)
-        predictions = self.model_.predict(X_scaled)  # Returns -1 (anomaly) or 1 (normal)
+        predictions = self.model_.predict(
+            X_scaled
+        )  # Returns -1 (anomaly) or 1 (normal)
         # Convert to 0/1 (anomsmith convention)
         labels = (predictions == -1).astype(int)
 
@@ -333,4 +342,3 @@ class RobustCovarianceDetector(BaseDetector):
         scores = -scores
 
         return ScoreView(index=index, scores=scores)
-

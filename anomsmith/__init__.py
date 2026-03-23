@@ -86,7 +86,7 @@ _BASE_EXPORTS = [
 
 try:
     from timesmith.typing import PanelLike, SeriesLike
+
     __all__ = _BASE_EXPORTS + ["SeriesLike", "PanelLike"]
 except ImportError:
     __all__ = _BASE_EXPORTS
-

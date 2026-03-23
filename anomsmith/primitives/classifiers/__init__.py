@@ -11,24 +11,30 @@ try:
         LSTMDistressClassifier,
         AttentionLSTMDistressClassifier,
     )
+
     _TENSORFLOW_AVAILABLE = True
 except ImportError:
     _TENSORFLOW_AVAILABLE = False
 
 try:
     from anomsmith.primitives.classifiers.ordinal import OrdinalLogisticClassifier
+
     _MORD_AVAILABLE = True
 except ImportError:
     _MORD_AVAILABLE = False
 
 try:
-    from anomsmith.primitives.classifiers.lightgbm_ordinal import LightGBMOrdinalClassifier
+    from anomsmith.primitives.classifiers.lightgbm_ordinal import (
+        LightGBMOrdinalClassifier,
+    )
+
     _LIGHTGBM_AVAILABLE = True
 except ImportError:
     _LIGHTGBM_AVAILABLE = False
 
 try:
     from anomsmith.primitives.classifiers.corn_lstm import CORNLSTMClassifier
+
     _CORAL_PYTORCH_AVAILABLE = True
 except ImportError:
     _CORAL_PYTORCH_AVAILABLE = False
@@ -38,6 +44,7 @@ try:
         AveragingOrdinalEnsemble,
         StackedOrdinalEnsemble,
     )
+
     _ENSEMBLE_AVAILABLE = True
 except ImportError:
     _ENSEMBLE_AVAILABLE = False
@@ -62,4 +69,3 @@ if _CORAL_PYTORCH_AVAILABLE:
 
 if _ENSEMBLE_AVAILABLE:
     __all__.extend(["AveragingOrdinalEnsemble", "StackedOrdinalEnsemble"])
-

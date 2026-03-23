@@ -97,7 +97,9 @@ def apply_policy(
         )
     else:
         index = pd.RangeIndex(start=0, stop=len(health_states))
-        health_state_view = HealthStateView(index=index, states=np.asarray(health_states))
+        health_state_view = HealthStateView(
+            index=index, states=np.asarray(health_states)
+        )
 
     # Convert previous states if provided
     previous_state_view: Optional[HealthStateView] = None
@@ -169,7 +171,9 @@ def evaluate_policy(
         )
     else:
         index = pd.RangeIndex(start=0, stop=len(health_states))
-        health_state_view = HealthStateView(index=index, states=np.asarray(health_states))
+        health_state_view = HealthStateView(
+            index=index, states=np.asarray(health_states)
+        )
 
     # Convert previous states if provided
     previous_state_view: Optional[HealthStateView] = None
@@ -197,4 +201,3 @@ def evaluate_policy(
     )
 
     return policy.evaluate(health_state_view, previous_state_view)
-

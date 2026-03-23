@@ -65,7 +65,9 @@ class ParametricSurvivalModel(CoxSurvivalModel):
         "exponential": ExponentialFitter if LIFELINES_AVAILABLE else None,
         "lognormal": LogNormalFitter if LIFELINES_AVAILABLE else None,
         "loglogistic": LogLogisticFitter if LIFELINES_AVAILABLE else None,
-        "piecewise_exponential": PiecewiseExponentialFitter if LIFELINES_AVAILABLE else None,
+        "piecewise_exponential": PiecewiseExponentialFitter
+        if LIFELINES_AVAILABLE
+        else None,
         "generalized_gamma": GeneralizedGammaFitter if LIFELINES_AVAILABLE else None,
         "spline": SplineFitter if LIFELINES_AVAILABLE else None,
     }
@@ -81,7 +83,9 @@ class ParametricSurvivalModel(CoxSurvivalModel):
             "generalized_gamma",
             "spline",
         ] = "weibull",
-        breakpoints: Optional[list[float]] = None,  # For piecewise_exponential and spline
+        breakpoints: Optional[
+            list[float]
+        ] = None,  # For piecewise_exponential and spline
         alpha: float = 0.05,  # For confidence intervals
         random_state: Optional[int] = None,
         **kwargs,
@@ -133,7 +137,9 @@ class ParametricSurvivalModel(CoxSurvivalModel):
             Self for method chaining
         """
         durations_array = np.asarray(durations)
-        events_array = np.asarray(events) if events is not None else np.ones(len(durations))
+        events_array = (
+            np.asarray(events) if events is not None else np.ones(len(durations))
+        )
 
         # Store for later use
         self.durations_ = durations_array
@@ -156,7 +162,9 @@ class ParametricSurvivalModel(CoxSurvivalModel):
             self.model_ = model_class(alpha=self.alpha, **self.kwargs)  # type: ignore
 
         # Fit model
-        self.model_.fit(durations_array, events_array, label=f"{self.model_type.capitalize()}")  # type: ignore
+        self.model_.fit(
+            durations_array, events_array, label=f"{self.model_type.capitalize()}"
+        )  # type: ignore
 
         self._fitted = True
         logger.debug(
@@ -166,7 +174,9 @@ class ParametricSurvivalModel(CoxSurvivalModel):
         return self
 
     def predict_survival_function(
-        self, X: Union[np.ndarray, pd.DataFrame, None] = None, time_points: Optional[np.ndarray] = None
+        self,
+        X: Union[np.ndarray, pd.DataFrame, None] = None,
+        time_points: Optional[np.ndarray] = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t).
 
@@ -201,7 +211,9 @@ class ParametricSurvivalModel(CoxSurvivalModel):
         surv_matrix = np.tile(surv_values.reshape(-1, 1), (1, n_samples))
         return pd.DataFrame(surv_matrix, index=time_index, columns=range(n_samples))
 
-    def predict_risk_score(self, X: Union[np.ndarray, pd.DataFrame, None] = None) -> np.ndarray:
+    def predict_risk_score(
+        self, X: Union[np.ndarray, pd.DataFrame, None] = None
+    ) -> np.ndarray:
         """Predict risk scores.
 
         Note: Non-covariate parametric models don't provide per-sample risk scores.
@@ -225,7 +237,9 @@ class ParametricSurvivalModel(CoxSurvivalModel):
 
         return np.full(n_samples, -median_survival)
 
-    def predict(self, time_points: Union[float, int, np.ndarray, pd.Series]) -> Union[float, np.ndarray]:
+    def predict(
+        self, time_points: Union[float, int, np.ndarray, pd.Series]
+    ) -> Union[float, np.ndarray]:
         """Predict survival probability at specific time points.
 
         Args:
@@ -247,7 +261,11 @@ class ParametricSurvivalModel(CoxSurvivalModel):
         else:
             time_array = np.asarray(time_points)
             predictions = self.model_.predict(time_array)  # type: ignore
-            return predictions.values if isinstance(predictions, pd.Series) else predictions
+            return (
+                predictions.values
+                if isinstance(predictions, pd.Series)
+                else predictions
+            )
 
     def plot_survival_function(self, ax=None, **kwargs):
         """Plot survival function using lifelines plotting.
@@ -262,4 +280,3 @@ class ParametricSurvivalModel(CoxSurvivalModel):
         self._check_fitted()
 
         return self.model_.plot_survival_function(ax=ax, **kwargs)  # type: ignore
-

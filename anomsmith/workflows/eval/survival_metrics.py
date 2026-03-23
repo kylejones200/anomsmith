@@ -92,8 +92,12 @@ def compute_concordance_index(
             if events_array[j] == 1:
                 # Both have events - always comparable
                 comparable += 1
-                if (durations_array[i] < durations_array[j] and risk_array[i] > risk_array[j]) or (
-                    durations_array[i] > durations_array[j] and risk_array[i] < risk_array[j]
+                if (
+                    durations_array[i] < durations_array[j]
+                    and risk_array[i] > risk_array[j]
+                ) or (
+                    durations_array[i] > durations_array[j]
+                    and risk_array[i] < risk_array[j]
                 ):
                     concordant += 1
             elif durations_array[j] > durations_array[i]:
@@ -143,14 +147,18 @@ def evaluate_survival_model(
     if risk_scores is None:
         # Use negative median survival time as risk score
         median_survival = surv_df.apply(
-            lambda col: col.index[col <= 0.5][0] if (col <= 0.5).any() else col.index[-1]
+            lambda col: (
+                col.index[col <= 0.5][0] if (col <= 0.5).any() else col.index[-1]
+            )
         )
         risk_scores_array = -median_survival.values
     else:
         risk_scores_array = np.asarray(risk_scores)
 
     # Compute C-index
-    c_index = compute_concordance_index(durations_array, risk_scores_array, events_array)
+    c_index = compute_concordance_index(
+        durations_array, risk_scores_array, events_array
+    )
 
     # Compute MAE (using median survival as prediction)
     median_survival = surv_df.apply(
@@ -182,4 +190,3 @@ def evaluate_survival_model(
         "mean_absolute_error": float(mae),
         "median_survival_error": float(mae),
     }
-

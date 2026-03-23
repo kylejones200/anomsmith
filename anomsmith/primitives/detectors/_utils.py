@@ -38,7 +38,9 @@ def prepare_input_data(
         return X_data
 
 
-def extract_index_and_values(y: Union[np.ndarray, pd.Series]) -> tuple[pd.Index, np.ndarray]:
+def extract_index_and_values(
+    y: Union[np.ndarray, pd.Series],
+) -> tuple[pd.Index, np.ndarray]:
     """Extract index and values from input.
 
     Args:
@@ -51,5 +53,3 @@ def extract_index_and_values(y: Union[np.ndarray, pd.Series]) -> tuple[pd.Index,
         return y.index, y.values
     else:
         return pd.RangeIndex(start=0, stop=len(y)), y
-
-

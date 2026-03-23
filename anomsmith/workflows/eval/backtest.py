@@ -25,6 +25,7 @@ from anomsmith.workflows.eval.metrics import (
 
 logger = logging.getLogger(__name__)
 
+
 # Use our own implementation since timesmith's API differs
 # (timesmith's ExpandingWindowSplit has different parameter names)
 class ExpandingWindowSplit:
@@ -45,7 +46,9 @@ class ExpandingWindowSplit:
         self.n_splits = n_splits
         self.min_train_size = min_train_size
 
-    def split(self, y: Union[pd.Series, np.ndarray, "SeriesLike"]) -> list[tuple[int, int]]:
+    def split(
+        self, y: Union[pd.Series, np.ndarray, "SeriesLike"]
+    ) -> list[tuple[int, int]]:
         """Generate train/test cutoff points.
 
         Args:
@@ -74,13 +77,15 @@ class ExpandingWindowSplit:
 # SlidingWindowSplit not available from timesmith, define our own if needed
 class SlidingWindowSplit:
     """Sliding window splitter for time series backtesting.
-    
+
     Similar to ExpandingWindowSplit but uses fixed-size windows.
     """
-    
-    def __init__(self, n_splits: int = 5, train_size: int = 20, test_size: int = 10) -> None:
+
+    def __init__(
+        self, n_splits: int = 5, train_size: int = 20, test_size: int = 10
+    ) -> None:
         """Initialize splitter.
-        
+
         Args:
             n_splits: Number of splits to generate
             train_size: Size of training window
@@ -89,13 +94,15 @@ class SlidingWindowSplit:
         self.n_splits = n_splits
         self.train_size = train_size
         self.test_size = test_size
-    
-    def split(self, y: Union[pd.Series, np.ndarray, "SeriesLike"]) -> list[tuple[int, int]]:
+
+    def split(
+        self, y: Union[pd.Series, np.ndarray, "SeriesLike"]
+    ) -> list[tuple[int, int]]:
         """Generate train/test cutoff points.
-        
+
         Args:
             y: Time series to split
-            
+
         Returns:
             List of (train_end, test_start) tuples
         """
@@ -105,20 +112,20 @@ class SlidingWindowSplit:
                 f"Series length ({n}) must be at least "
                 f"{self.train_size + self.test_size}"
             )
-        
+
         # Generate sliding windows (vectorized)
         max_start = n - self.train_size - self.test_size
         step = max(1, max_start // self.n_splits) if max_start > 0 else 1
-        
+
         # Vectorized: compute all train starts at once
         indices = np.arange(self.n_splits)
         train_starts = np.minimum(indices * step, max_start)
         train_ends = train_starts + self.train_size
         test_starts = train_ends  # test starts where train ends
-        
+
         # Convert to list of tuples as expected by consumers
         cutoffs = [(int(te), int(ts)) for te, ts in zip(train_ends, test_starts)]
-        
+
         return cutoffs
 
 
@@ -197,4 +204,3 @@ def backtest_detector(
             "avg_run_length": avg_run_lengths,
         }
     )
-

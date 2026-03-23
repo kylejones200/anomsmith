@@ -9,7 +9,12 @@ from typing import TYPE_CHECKING, Optional, Union
 import numpy as np
 import pandas as pd
 
-from anomsmith.objects.health_state import Action, ActionView, HealthStateView, PolicyResult
+from anomsmith.objects.health_state import (
+    Action,
+    ActionView,
+    HealthStateView,
+    PolicyResult,
+)
 
 if TYPE_CHECKING:
     try:
@@ -82,7 +87,9 @@ class SimpleHealthPolicy:
         # Check for transitions if previous states provided
         if previous_states is not None:
             if len(previous_states.states) != len(states):
-                raise ValueError("Previous states must have same length as current states")
+                raise ValueError(
+                    "Previous states must have same length as current states"
+                )
 
             # Healthy -> Warning transition triggers review
             transitions = (previous_states.states == 0) & (states == 1)
@@ -132,4 +139,3 @@ class SimpleHealthPolicy:
             "reviews": int((result.actions.actions == Action.REVIEW).sum()),
             "waits": int((result.actions.actions == Action.WAIT).sum()),
         }
-

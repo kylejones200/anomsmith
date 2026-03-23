@@ -39,4 +39,3 @@ except ImportError:
         "SlidingWindowSplit",
         "backtest_detector",
     ]
-

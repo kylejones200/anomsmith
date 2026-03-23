@@ -12,6 +12,7 @@ import pandas as pd
 try:
     import statsmodels.api as sm
     from statsmodels.tsa.arima.model import ARIMA
+
     STATSMODELS_AVAILABLE = True
 except ImportError:
     STATSMODELS_AVAILABLE = False
@@ -67,7 +68,9 @@ class ARIMADriftDetector(BaseDetector):
         self.model_: ARIMA | None = None  # type: ignore
         self.fitted_model_: Any | None = None  # type: ignore
         self.residual_std_: float = 0.0
-        super().__init__(order=order, threshold_std=threshold_std, random_state=random_state)
+        super().__init__(
+            order=order, threshold_std=threshold_std, random_state=random_state
+        )
         self._fitted = False
 
     def fit(
@@ -91,7 +94,9 @@ class ARIMADriftDetector(BaseDetector):
 
         if values.ndim > 1:
             if values.shape[1] > 1:
-                raise ValueError("ARIMADriftDetector only supports univariate time series.")
+                raise ValueError(
+                    "ARIMADriftDetector only supports univariate time series."
+                )
             values = values.flatten()
 
         # Fit ARIMA model
@@ -102,9 +107,11 @@ class ARIMADriftDetector(BaseDetector):
             residuals = self.fitted_model_.resid  # type: ignore
             self.residual_std_ = np.std(residuals)
             self._fitted = True
-            logger.debug(f"Fitted ARIMADriftDetector: residual_std={self.residual_std_:.4f}")
+            logger.debug(
+                f"Fitted ARIMADriftDetector: residual_std={self.residual_std_:.4f}"
+            )
         except Exception as e:
-            logger.error(f"Error fitting ARIMA model: {e}")
+            logger.exception("Error fitting ARIMA model: %s", e)
             raise
 
         return self
@@ -129,7 +136,9 @@ class ARIMADriftDetector(BaseDetector):
 
         if values.ndim > 1:
             if values.shape[1] > 1:
-                raise ValueError("ARIMADriftDetector only supports univariate time series.")
+                raise ValueError(
+                    "ARIMADriftDetector only supports univariate time series."
+                )
             values = values.flatten()
 
         # Generate forecasts using fitted model
@@ -138,7 +147,9 @@ class ARIMADriftDetector(BaseDetector):
 
         try:
             # Use fitted model's predict method
-            forecast = self.fitted_model_.predict(start=1, end=len(values), dynamic=False)  # type: ignore
+            forecast = self.fitted_model_.predict(
+                start=1, end=len(values), dynamic=False
+            )  # type: ignore
             # Compute residuals (actual - forecast)
             residuals = values[1:] - forecast
             # Score is absolute residual normalized by residual std
@@ -146,7 +157,7 @@ class ARIMADriftDetector(BaseDetector):
             # Pad first value (no prediction for first point)
             scores = np.concatenate([[0.0], scores])
         except Exception as e:
-            logger.error(f"Error generating ARIMA forecast: {e}")
+            logger.exception("Error generating ARIMA forecast: %s", e)
             raise
 
         return ScoreView(index=index, scores=scores)
@@ -164,4 +175,3 @@ class ARIMADriftDetector(BaseDetector):
         # Flag as drift if score exceeds threshold
         labels = (score_view.scores > self.threshold_std).astype(int)
         return LabelView(index=score_view.index, labels=labels)
-

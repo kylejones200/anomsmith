@@ -49,7 +49,9 @@ class PCADetector(BaseDetector):
     def __init__(
         self,
         n_components: Union[float, int] = 0.95,
-        score_method: Literal["reconstruction", "mahalanobis", "both"] = "reconstruction",
+        score_method: Literal[
+            "reconstruction", "mahalanobis", "both"
+        ] = "reconstruction",
         contamination: float = 0.05,
         random_state: Optional[int] = None,
     ) -> None:
@@ -119,8 +121,12 @@ class PCADetector(BaseDetector):
 
         # Store normalization parameters for "both" method to avoid test data leakage
         if self.score_method == "both":
-            recon_scores = self._compute_scores_with_method(X_scaled, X_pca, "reconstruction")
-            maha_scores = self._compute_scores_with_method(X_scaled, X_pca, "mahalanobis")
+            recon_scores = self._compute_scores_with_method(
+                X_scaled, X_pca, "reconstruction"
+            )
+            maha_scores = self._compute_scores_with_method(
+                X_scaled, X_pca, "mahalanobis"
+            )
             self.recon_min_ = float(recon_scores.min())
             self.recon_max_ = float(recon_scores.max())
             self.maha_min_ = float(maha_scores.min())
@@ -190,11 +196,13 @@ class PCADetector(BaseDetector):
         elif self.score_method == "mahalanobis":
             # Mahalanobis distance in PC space
             if self.mean_ is None or self.cov_ is None:
-                raise ValueError("PCA must be fitted before computing Mahalanobis distance.")
+                raise ValueError(
+                    "PCA must be fitted before computing Mahalanobis distance."
+                )
 
             # Vectorized Mahalanobis distance: sqrt((x - mu)^T * Sigma^-1 * (x - mu))
             diff = X_pca - self.mean_  # Shape: (n_samples, n_components)
-            
+
             try:
                 inv_cov = np.linalg.inv(self.cov_)
             except np.linalg.LinAlgError:
@@ -205,16 +213,25 @@ class PCADetector(BaseDetector):
             # (diff @ inv_cov) * diff computes element-wise product, then sum over features
             quad_form = (diff @ inv_cov) * diff  # Shape: (n_samples, n_components)
             mahalanobis_dist = np.sqrt(np.sum(quad_form, axis=1))  # Shape: (n_samples,)
-            
+
             return mahalanobis_dist
 
         elif self.score_method == "both":
             # Average of both methods
-            recon_scores = self._compute_scores_with_method(X_scaled, X_pca, "reconstruction")
-            maha_scores = self._compute_scores_with_method(X_scaled, X_pca, "mahalanobis")
+            recon_scores = self._compute_scores_with_method(
+                X_scaled, X_pca, "reconstruction"
+            )
+            maha_scores = self._compute_scores_with_method(
+                X_scaled, X_pca, "mahalanobis"
+            )
             # Normalize using training data statistics (stored during fit) to avoid leakage
             # Normalize using training data statistics (stored during fit) to avoid leakage
-            if hasattr(self, 'recon_min_') and hasattr(self, 'recon_max_') and self.recon_min_ is not None and self.recon_max_ is not None:
+            if (
+                hasattr(self, "recon_min_")
+                and hasattr(self, "recon_max_")
+                and self.recon_min_ is not None
+                and self.recon_max_ is not None
+            ):
                 recon_norm = (recon_scores - self.recon_min_) / (
                     self.recon_max_ - self.recon_min_ + 1e-10
                 )
@@ -228,8 +245,13 @@ class PCADetector(BaseDetector):
                 recon_norm = (recon_scores - recon_scores.min()) / (
                     recon_scores.max() - recon_scores.min() + 1e-10
                 )
-            
-            if hasattr(self, 'maha_min_') and hasattr(self, 'maha_max_') and self.maha_min_ is not None and self.maha_max_ is not None:
+
+            if (
+                hasattr(self, "maha_min_")
+                and hasattr(self, "maha_max_")
+                and self.maha_min_ is not None
+                and self.maha_max_ is not None
+            ):
                 maha_norm = (maha_scores - self.maha_min_) / (
                     self.maha_max_ - self.maha_min_ + 1e-10
                 )
@@ -243,7 +265,7 @@ class PCADetector(BaseDetector):
                 maha_norm = (maha_scores - maha_scores.min()) / (
                     maha_scores.max() - maha_scores.min() + 1e-10
                 )
-            
+
             return (recon_norm + maha_norm) / 2
 
         else:
@@ -258,11 +280,13 @@ class PCADetector(BaseDetector):
             return np.sum((X_scaled - X_reconstructed) ** 2, axis=1)
         elif method == "mahalanobis":
             if self.mean_ is None or self.cov_ is None:
-                raise ValueError("PCA must be fitted before computing Mahalanobis distance.")
-            
+                raise ValueError(
+                    "PCA must be fitted before computing Mahalanobis distance."
+                )
+
             # Vectorized Mahalanobis distance calculation
             diff = X_pca - self.mean_  # Shape: (n_samples, n_components)
-            
+
             try:
                 inv_cov = np.linalg.inv(self.cov_)
             except np.linalg.LinAlgError:
@@ -273,4 +297,3 @@ class PCADetector(BaseDetector):
             return np.sqrt(np.sum(quad_form, axis=1))  # Shape: (n_samples,)
         else:
             raise ValueError(f"Unknown method: {method}")
-

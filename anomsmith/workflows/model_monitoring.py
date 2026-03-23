@@ -263,8 +263,12 @@ def aggregate_metrics_for_cloudwatch(
                 "Unit": "None",
             }
             if model_name:
-                metric_data_min["Dimensions"] = [{"Name": "ModelName", "Value": model_name}]
-                metric_data_max["Dimensions"] = [{"Name": "ModelName", "Value": model_name}]
+                metric_data_min["Dimensions"] = [
+                    {"Name": "ModelName", "Value": model_name}
+                ]
+                metric_data_max["Dimensions"] = [
+                    {"Name": "ModelName", "Value": model_name}
+                ]
 
             cloudwatch_metrics.extend([metric_data_min, metric_data_max])
 
@@ -282,7 +286,9 @@ class ModelPerformanceTracker:
         metrics_history: DataFrame with historical metrics
     """
 
-    def __init__(self, window_size: int = 1000, model_name: Optional[str] = None) -> None:
+    def __init__(
+        self, window_size: int = 1000, model_name: Optional[str] = None
+    ) -> None:
         """Initialize performance tracker.
 
         Args:
@@ -385,7 +391,9 @@ class ModelPerformanceTracker:
 
         return self.metrics_history.iloc[-1].to_dict()
 
-    def detect_degradation(self, baseline_metrics: dict[str, float], threshold: float = 0.1) -> bool:
+    def detect_degradation(
+        self, baseline_metrics: dict[str, float], threshold: float = 0.1
+    ) -> bool:
         """Detect if performance has degraded compared to baseline.
 
         Args:
@@ -400,8 +408,9 @@ class ModelPerformanceTracker:
         if "f1" in baseline_metrics and "f1" in current:
             baseline_f1 = baseline_metrics["f1"]
             current_f1 = current["f1"]
-            degradation = (baseline_f1 - current_f1) / baseline_f1 if baseline_f1 > 0 else 0.0
+            degradation = (
+                (baseline_f1 - current_f1) / baseline_f1 if baseline_f1 > 0 else 0.0
+            )
             return degradation > threshold
 
         return False
-

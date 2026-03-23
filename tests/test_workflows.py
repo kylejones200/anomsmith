@@ -37,6 +37,18 @@ class TestScoreAnomalies:
 
         assert scores.index.equals(y.index)
 
+    def test_score_anomalies_with_ndarray(self) -> None:
+        """Test score_anomalies with numpy array returns aligned RangeIndex."""
+        y = np.random.randn(60)
+        scorer = RobustZScoreScorer()
+        scorer.fit(y)
+
+        scores = score_anomalies(y, scorer)
+
+        assert isinstance(scores, pd.Series)
+        assert len(scores) == len(y)
+        assert scores.index.equals(pd.RangeIndex(0, 60))
+
 
 class TestDetectAnomalies:
     """Tests for detect_anomalies workflow."""
@@ -69,6 +81,20 @@ class TestDetectAnomalies:
         assert "score" in result.columns
         assert "flag" in result.columns
         assert np.all(np.isin(result["flag"].values, [0, 1]))
+
+    def test_detect_anomalies_with_ndarray_y(self) -> None:
+        """Test detect_anomalies works when y is numpy array."""
+        y = np.random.randn(80)
+        scorer = RobustZScoreScorer()
+        scorer.fit(y)
+        threshold_rule = ThresholdRule(method="quantile", value=0.95, quantile=0.95)
+
+        result = detect_anomalies(y, scorer, threshold_rule)
+
+        assert isinstance(result, pd.DataFrame)
+        assert len(result) == len(y)
+        assert "score" in result.columns
+        assert "flag" in result.columns
 
 
 class TestSweepThresholds:
@@ -107,5 +133,3 @@ class TestSweepThresholds:
         result = sweep_thresholds(y, scorer, [1.0, 2.0])
         assert result["precision"].isna().all()
         assert result["recall"].isna().all()
-
-

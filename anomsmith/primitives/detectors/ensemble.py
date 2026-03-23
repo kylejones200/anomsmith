@@ -54,7 +54,9 @@ class VotingEnsembleDetector(BaseDetector):
         self.voting_threshold = voting_threshold
         self.random_state = random_state
         super().__init__(
-            detectors=detectors, voting_threshold=voting_threshold, random_state=random_state
+            detectors=detectors,
+            voting_threshold=voting_threshold,
+            random_state=random_state,
         )
         self._fitted = False
 
@@ -153,7 +155,9 @@ class VotingEnsembleDetector(BaseDetector):
 
         return LabelView(index=index, labels=labels)
 
-    def get_vote_counts(self, y: Union[np.ndarray, pd.Series, "SeriesLike"]) -> np.ndarray:
+    def get_vote_counts(
+        self, y: Union[np.ndarray, pd.Series, "SeriesLike"]
+    ) -> np.ndarray:
         """Get vote counts for each sample.
 
         Args:
@@ -180,4 +184,3 @@ class VotingEnsembleDetector(BaseDetector):
         predictions_array = np.array(all_predictions)
         vote_counts = np.sum(predictions_array == 1, axis=0)
         return vote_counts
-

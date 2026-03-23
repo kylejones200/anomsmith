@@ -24,25 +24,25 @@ def test_timesmith_typing_integration() -> None:
     values = np.random.randn(n) * 2 + 10
     index = pd.date_range("2020-01-01", periods=n, freq="D")
     y: SeriesLike = pd.Series(values, index=index)
-    
+
     # Inject an anomaly
     y.iloc[50] += 10.0
-    
+
     # Use anomsmith to detect anomalies
     scorer = RobustZScoreScorer(epsilon=1e-8)
     scorer.fit(y.values)
-    
+
     threshold_rule = ThresholdRule(method="quantile", value=0.95, quantile=0.95)
     result = detect_anomalies(y, scorer, threshold_rule)
-    
+
     # Verify we got results
     assert len(result) == n
-    assert 'score' in result.columns
-    assert 'flag' in result.columns
+    assert "score" in result.columns
+    assert "flag" in result.columns
     assert result.index.equals(y.index)
-    
+
     # Verify we detected at least one anomaly (the injected one)
-    assert result['flag'].sum() > 0
+    assert result["flag"].sum() > 0
 
 
 def test_timesmith_validation_preserved() -> None:
@@ -53,14 +53,13 @@ def test_timesmith_validation_preserved() -> None:
     values = np.random.randn(n)
     index = pd.date_range("2020-01-01", periods=n, freq="D")
     y: SeriesLike = pd.Series(values, index=index)
-    
+
     # This should work - anomsmith should accept SeriesLike
     scorer = RobustZScoreScorer(epsilon=1e-8)
     scorer.fit(y.values)
-    
+
     threshold_rule = ThresholdRule(method="quantile", value=0.95, quantile=0.95)
     result = detect_anomalies(y, scorer, threshold_rule)
-    
+
     # Verify the result maintains the index
     assert result.index.equals(y.index)
-

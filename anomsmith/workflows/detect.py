@@ -175,9 +175,7 @@ def report_detection(
 
     # Top anomalies by score
     top_anomalies = (
-        result_df[result_df["flag"] == 1]
-        .nlargest(10, "score")
-        .index.tolist()
+        result_df[result_df["flag"] == 1].nlargest(10, "score").index.tolist()
     )
 
     report = {
@@ -191,4 +189,3 @@ def report_detection(
     }
 
     return report
-

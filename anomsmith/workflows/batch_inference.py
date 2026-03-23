@@ -113,16 +113,18 @@ def process_s3_batch(
         >>> s3_keys = ["data/2024/01/01/file1.csv", "data/2024/01/01/file2.csv"]
         >>> results = process_s3_batch(s3_keys, scorer, bucket="my-data-bucket")
     """
+    if not s3_keys:
+        raise ValueError("s3_keys must be non-empty.")
+
+    if not model.is_fitted:
+        raise ValueError("Model must be fitted before processing.")
+
     try:
         import boto3
     except ImportError:
         raise ImportError(
             "boto3 is required for S3 batch processing. Install with: pip install boto3"
         )
-
-    if not model.is_fitted:
-        raise ValueError("Model must be fitted before processing.")
-
 
     if s3_client is None:
         s3_client = boto3.client("s3")
@@ -142,7 +144,8 @@ def process_s3_batch(
             if isinstance(model, BaseScorer):
                 score_view = model.score(y)
                 result_df = pd.DataFrame(
-                    {"score": score_view.scores, "s3_key": s3_key}, index=score_view.index
+                    {"score": score_view.scores, "s3_key": s3_key},
+                    index=score_view.index,
                 )
             else:
                 label_view = model.predict(y)
@@ -160,11 +163,10 @@ def process_s3_batch(
             logger.info(f"Processed {s3_key}: {len(result_df)} samples")
 
         except Exception as e:
-            logger.error(f"Error processing {s3_key}: {e}")
+            logger.exception("Error processing %s: %s", s3_key, e)
             continue
 
     if not all_results:
         return pd.DataFrame()
 
     return pd.concat(all_results, ignore_index=False)
-

@@ -93,8 +93,10 @@ class LightGBMOrdinalClassifier(BaseEstimator):
             Self for method chaining
         """
         if X is None:
-            raise ValueError("X (feature matrix) is required for LightGBMOrdinalClassifier")
-        
+            raise ValueError(
+                "X (feature matrix) is required for LightGBMOrdinalClassifier"
+            )
+
         if isinstance(X, pd.DataFrame):
             X_data = X.values
             feature_names = list(X.columns)
@@ -216,4 +218,3 @@ class LightGBMOrdinalClassifier(BaseEstimator):
 
         predictions = self.predict(X)
         return HealthStateView(index=index, states=predictions)
-

@@ -56,8 +56,9 @@ def discretize_rul_to_health_states(
 
     # Discretize RUL - vectorized
     states = np.zeros(len(rul_values), dtype=int)
-    states[(rul_values > warning_threshold) & (rul_values <= healthy_threshold)] = HealthState.WARNING
+    states[(rul_values > warning_threshold) & (rul_values <= healthy_threshold)] = (
+        HealthState.WARNING
+    )
     states[rul_values <= warning_threshold] = HealthState.DISTRESS
 
     return HealthStateView(index=index, states=states)
-

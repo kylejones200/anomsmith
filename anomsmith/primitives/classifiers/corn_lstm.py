@@ -46,6 +46,7 @@ logger = logging.getLogger(__name__)
 
 # Only define PyTorch-dependent classes if PyTorch is available
 if TORCH_AVAILABLE:
+
     class SequenceDataset(Dataset):  # type: ignore
         """Dataset for time series sequences."""
 
@@ -66,7 +67,6 @@ if TORCH_AVAILABLE:
         def __getitem__(self, idx: int) -> tuple:
             """Get item by index."""
             return self.X[idx], self.y[idx]
-
 
     class LSTMBackbone(nn.Module):  # type: ignore
         """LSTM backbone for sequence processing."""
@@ -94,11 +94,12 @@ if TORCH_AVAILABLE:
             _, (h, _) = self.lstm(x)  # type: ignore
             return h[-1]  # Return last hidden state
 
-
     class CORNModel(nn.Module):  # type: ignore
         """CORN (Continuous Ordinal Regression Networks) model."""
 
-        def __init__(self, input_size: int = 21, hidden_size: int = 64, num_classes: int = 3):
+        def __init__(
+            self, input_size: int = 21, hidden_size: int = 64, num_classes: int = 3
+        ):
             """Initialize CORN model.
 
             Args:
@@ -213,9 +214,7 @@ class CORNLSTMClassifier(BaseEstimator):
             # Univariate: add feature dimension
             sequences = sequences.reshape(sequences.shape[0], sequences.shape[1], 1)
         elif sequences.ndim != 3:
-            raise ValueError(
-                f"Sequences must be 2D or 3D, got shape {sequences.shape}"
-            )
+            raise ValueError(f"Sequences must be 2D or 3D, got shape {sequences.shape}")
 
         n_samples, seq_len_actual, input_size_actual = sequences.shape
 
@@ -239,7 +238,7 @@ class CORNLSTMClassifier(BaseEstimator):
         unique_vals = np.unique(labels_array)
         if not np.all(np.isin(unique_vals, range(self.num_classes))):
             raise ValueError(
-                f"Labels must be in [0, {self.num_classes-1}], got unique values: {unique_vals}"
+                f"Labels must be in [0, {self.num_classes - 1}], got unique values: {unique_vals}"
             )
 
         # Create dataset and dataloader
@@ -269,7 +268,7 @@ class CORNLSTMClassifier(BaseEstimator):
                 total_loss += loss.item()  # type: ignore
 
             if verbose > 0:
-                logger.info(f"Epoch {epoch+1}/{self.epochs}: Loss = {total_loss:.4f}")
+                logger.info(f"Epoch {epoch + 1}/{self.epochs}: Loss = {total_loss:.4f}")
 
         self._fitted = True
         logger.debug(
@@ -293,9 +292,7 @@ class CORNLSTMClassifier(BaseEstimator):
         if sequences.ndim == 2:
             sequences = sequences.reshape(sequences.shape[0], sequences.shape[1], 1)
         elif sequences.ndim != 3:
-            raise ValueError(
-                f"Sequences must be 2D or 3D, got shape {sequences.shape}"
-            )
+            raise ValueError(f"Sequences must be 2D or 3D, got shape {sequences.shape}")
 
         self.model_.eval()  # type: ignore
 
@@ -324,4 +321,3 @@ class CORNLSTMClassifier(BaseEstimator):
 
         predictions = self.predict(sequences)
         return HealthStateView(index=index, states=predictions)
-

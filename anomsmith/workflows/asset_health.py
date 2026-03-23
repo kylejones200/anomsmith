@@ -86,7 +86,9 @@ def assess_asset_health(
     health_states = np.zeros(len(X), dtype=int)
 
     if use_classification and failure_labels is not None:
-        classifier = FailureRiskClassifier(n_estimators=n_estimators, random_state=random_state)
+        classifier = FailureRiskClassifier(
+            n_estimators=n_estimators, random_state=random_state
+        )
         classifier.fit(X, failure_labels)
         probas = classifier.predict_proba(X)
         if probas.shape[1] > 1:
@@ -106,7 +108,9 @@ def assess_asset_health(
         use_classification = False
 
     results["failure_risk"] = failure_risks if use_classification else np.nan
-    results["health_state"] = health_states if use_classification else np.zeros(len(X), dtype=int)
+    results["health_state"] = (
+        health_states if use_classification else np.zeros(len(X), dtype=int)
+    )
 
     # Anomaly detection
     anomaly_flags = np.zeros(len(X), dtype=int)
@@ -114,7 +118,9 @@ def assess_asset_health(
 
     if use_anomaly_detection:
         # Use Isolation Forest for multivariate anomaly detection
-        detector = IsolationForestDetector(contamination=contamination, random_state=random_state)
+        detector = IsolationForestDetector(
+            contamination=contamination, random_state=random_state
+        )
 
         # Fit on sensor data (treating each row as a sample)
         # For Isolation Forest, we need to fit on all data
@@ -174,7 +180,9 @@ def assess_asset_health(
     # Create DataFrame with results
     result_df = pd.DataFrame(results)
     # Sort by combined risk (highest first) for prioritization
-    result_df = result_df.sort_values("combined_risk", ascending=False).reset_index(drop=True)
+    result_df = result_df.sort_values("combined_risk", ascending=False).reset_index(
+        drop=True
+    )
 
     return result_df
 
@@ -196,4 +204,3 @@ def rank_assets_by_risk(
     if top_n is not None:
         ranked = ranked.head(top_n)
     return ranked
-

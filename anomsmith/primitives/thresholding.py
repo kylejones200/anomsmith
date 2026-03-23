@@ -31,9 +31,13 @@ class ThresholdRule:
                 raise ValueError(f"quantile must be in [0, 1], got {self.quantile}")
         elif self.method == "absolute":
             if self.quantile is not None:
-                raise ValueError("quantile should not be provided when method is 'absolute'")
+                raise ValueError(
+                    "quantile should not be provided when method is 'absolute'"
+                )
         else:
-            raise ValueError(f"method must be 'absolute' or 'quantile', got {self.method}")
+            raise ValueError(
+                f"method must be 'absolute' or 'quantile', got {self.method}"
+            )
 
 
 def apply_threshold(score_view: ScoreView, rule: ThresholdRule) -> LabelView:
@@ -60,4 +64,3 @@ def apply_threshold(score_view: ScoreView, rule: ThresholdRule) -> LabelView:
     labels = (scores >= threshold).astype(int)
 
     return LabelView(index=score_view.index, labels=labels)
-

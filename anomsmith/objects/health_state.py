@@ -125,4 +125,3 @@ class PolicyResult:
             },
             index=self.health_states.index,
         )
-

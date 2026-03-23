@@ -5,7 +5,11 @@ Workflows can import matplotlib only if plots are added (not in first pass).
 """
 
 from anomsmith.workflows.asset_health import assess_asset_health, rank_assets_by_risk
-from anomsmith.workflows.batch_inference import batch_predict, batch_score, process_s3_batch
+from anomsmith.workflows.batch_inference import (
+    batch_predict,
+    batch_score,
+    process_s3_batch,
+)
 from anomsmith.workflows.detect import (
     detect_anomalies,
     report_detection,
@@ -66,4 +70,3 @@ __all__ = [
     "assess_health_with_pca",
     "compute_pca_health_thresholds",
 ]
-

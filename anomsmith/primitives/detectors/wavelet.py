@@ -66,7 +66,10 @@ class WaveletDetector(BaseDetector):
         self.level = level
         self.random_state = random_state
         super().__init__(
-            wavelet=wavelet, threshold_factor=threshold_factor, level=level, random_state=random_state
+            wavelet=wavelet,
+            threshold_factor=threshold_factor,
+            level=level,
+            random_state=random_state,
         )
         self._fitted = False
 
@@ -91,13 +94,17 @@ class WaveletDetector(BaseDetector):
 
         if values.ndim > 1:
             if values.shape[1] > 1:
-                raise ValueError("WaveletDetector only supports univariate time series.")
+                raise ValueError(
+                    "WaveletDetector only supports univariate time series."
+                )
             values = values.flatten()
 
         # Store data for scoring
         self.data_ = values
         self._fitted = True
-        logger.debug(f"Fitted WaveletDetector with wavelet={self.wavelet}, level={self.level}")
+        logger.debug(
+            f"Fitted WaveletDetector with wavelet={self.wavelet}, level={self.level}"
+        )
         return self
 
     def score(self, y: Union[np.ndarray, pd.Series, "SeriesLike"]) -> ScoreView:
@@ -120,7 +127,9 @@ class WaveletDetector(BaseDetector):
 
         if values.ndim > 1:
             if values.shape[1] > 1:
-                raise ValueError("WaveletDetector only supports univariate time series.")
+                raise ValueError(
+                    "WaveletDetector only supports univariate time series."
+                )
             values = values.flatten()
 
         # Perform wavelet decomposition
@@ -180,5 +189,3 @@ class WaveletDetector(BaseDetector):
         labels = (scores > threshold).astype(int)
 
         return LabelView(index=score_view.index, labels=labels)
-
-

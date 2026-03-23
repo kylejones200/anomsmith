@@ -65,8 +65,10 @@ Workflows provide the public entry points users call. Workflows can import matpl
 ## Installation
 
 ```bash
-pip install anomsmith
+uv pip install anomsmith
 ```
+
+Or with pip: `pip install anomsmith`
 
 ## Quick Start
 

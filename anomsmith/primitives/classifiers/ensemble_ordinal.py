@@ -72,7 +72,9 @@ class AveragingOrdinalEnsemble(BaseEstimator):
         # Check that all models are fitted
         for i, model in enumerate(self.models):
             if not hasattr(model, "_fitted") or not model._fitted:
-                raise ValueError(f"Model {i} is not fitted. Fit all models before ensembling.")
+                raise ValueError(
+                    f"Model {i} is not fitted. Fit all models before ensembling."
+                )
 
         self._fitted = True
         logger.debug(f"AveragingOrdinalEnsemble: {len(self.models)} models")
@@ -92,9 +94,11 @@ class AveragingOrdinalEnsemble(BaseEstimator):
         # Get predictions from all models
         all_predictions = []
         for i, model in enumerate(self.models):
-            if not hasattr(model, 'predict'):
-                raise ValueError(f"Model {i} ({type(model).__name__}) does not have a predict method")
-            
+            if not hasattr(model, "predict"):
+                raise ValueError(
+                    f"Model {i} ({type(model).__name__}) does not have a predict method"
+                )
+
             try:
                 pred = model.predict(X)
             except (TypeError, ValueError) as e:
@@ -102,24 +106,28 @@ class AveragingOrdinalEnsemble(BaseEstimator):
                     f"Unable to predict with model {i} ({type(model).__name__}) on input "
                     f"{type(X).__name__}: {e}"
                 ) from e
-            
+
             if pred is None or len(pred) == 0:
-                raise ValueError(f"Model {i} ({type(model).__name__}) returned empty predictions")
-            
+                raise ValueError(
+                    f"Model {i} ({type(model).__name__}) returned empty predictions"
+                )
+
             all_predictions.append(pred)
 
         # Align all predictions to same length (handle different lengths)
         if not all_predictions:
             raise ValueError("No predictions obtained from models")
-        
+
         # Find minimum length across all predictions
         min_len = min(len(p) for p in all_predictions)
         if min_len == 0:
             raise ValueError("At least one model returned empty predictions")
-        
+
         # Align predictions: truncate if longer, pad if shorter
         all_predictions_aligned = [
-            p[:min_len] if len(p) >= min_len else np.pad(p, (0, min_len - len(p)), mode="edge")
+            p[:min_len]
+            if len(p) >= min_len
+            else np.pad(p, (0, min_len - len(p)), mode="edge")
             for p in all_predictions
         ]
 
@@ -180,7 +188,9 @@ class StackedOrdinalEnsemble(BaseEstimator):
                     "scikit-learn is required for default meta-model. "
                     "Install with: pip install scikit-learn"
                 )
-            meta_model = LogisticRegression(solver="lbfgs", max_iter=500, random_state=random_state)  # type: ignore
+            meta_model = LogisticRegression(
+                solver="lbfgs", max_iter=500, random_state=random_state
+            )  # type: ignore
 
         super().__init__(
             base_models=base_models, meta_model=meta_model, random_state=random_state
@@ -249,11 +259,11 @@ class StackedOrdinalEnsemble(BaseEstimator):
         # Get predictions from all base models (these become features for meta-model)
         base_predictions = []
         for i, model in enumerate(self.base_models):
-            if not hasattr(model, 'predict'):
+            if not hasattr(model, "predict"):
                 raise ValueError(
                     f"Base model {i} ({type(model).__name__}) does not have a predict method"
                 )
-            
+
             try:
                 pred = model.predict(X)
             except (TypeError, ValueError) as e:
@@ -261,24 +271,26 @@ class StackedOrdinalEnsemble(BaseEstimator):
                     f"Unable to predict with base model {i} ({type(model).__name__}) on input "
                     f"{type(X).__name__}: {e}"
                 ) from e
-            
+
             if pred is None or len(pred) == 0:
                 raise ValueError(
                     f"Base model {i} ({type(model).__name__}) returned empty predictions"
                 )
-            
+
             base_predictions.append(pred)
 
         # Align all predictions to same length (handle different lengths)
         if not base_predictions:
             raise ValueError("No predictions obtained from base models")
-        
+
         min_len = min(len(p) for p in base_predictions)
         if min_len == 0:
             raise ValueError("At least one base model returned empty predictions")
-        
+
         base_predictions_aligned = [
-            p[:min_len] if len(p) >= min_len else np.pad(p, (0, min_len - len(p)), mode="edge")
+            p[:min_len]
+            if len(p) >= min_len
+            else np.pad(p, (0, min_len - len(p)), mode="edge")
             for p in base_predictions
         ]
 
@@ -312,4 +324,3 @@ class StackedOrdinalEnsemble(BaseEstimator):
 
         predictions = self.predict(X)
         return HealthStateView(index=index, states=predictions)
-

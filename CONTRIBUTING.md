@@ -24,12 +24,13 @@ cd anomsmith
 ### 2. Set Up Development Environment
 
 ```bash
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Using uv (recommended)
+uv pip install -e ".[dev]"
 
-# Install in development mode with all dependencies
-pip install -e ".[dev,docs,all]"
+# Or with all extras (may require additional setup):
+# uv pip install -e ".[dev,docs,all]"
+
+# Or with pip: create venv, then pip install -e ".[dev]"
 
 # Install pre-commit hooks
 pre-commit install

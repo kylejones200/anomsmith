@@ -90,5 +90,3 @@ class TestApplyThreshold:
         label_view = apply_threshold(score_view, rule)
 
         assert label_view.index.equals(score_view.index)
-
-

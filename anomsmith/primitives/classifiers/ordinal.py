@@ -74,8 +74,10 @@ class OrdinalLogisticClassifier(BaseEstimator):
             Self for method chaining
         """
         if X is None:
-            raise ValueError("X (feature matrix) is required for OrdinalLogisticClassifier")
-        
+            raise ValueError(
+                "X (feature matrix) is required for OrdinalLogisticClassifier"
+            )
+
         if isinstance(X, pd.DataFrame):
             X_data = X.values
         else:
@@ -154,11 +156,13 @@ class OrdinalLogisticClassifier(BaseEstimator):
 
         # Vectorized probability assignment
         # Probability templates for each class: [p(Healthy), p(Warning), p(Distress)]
-        proba_templates = np.array([
-            [0.7, 0.2, 0.1],  # Class 0 (Healthy)
-            [0.2, 0.6, 0.2],  # Class 1 (Warning)
-            [0.1, 0.2, 0.7],  # Class 2 (Distress)
-        ])
+        proba_templates = np.array(
+            [
+                [0.7, 0.2, 0.1],  # Class 0 (Healthy)
+                [0.2, 0.6, 0.2],  # Class 1 (Warning)
+                [0.1, 0.2, 0.7],  # Class 2 (Distress)
+            ]
+        )
 
         # Use advanced indexing to assign probabilities (vectorized)
         proba = proba_templates[predictions]
@@ -185,4 +189,3 @@ class OrdinalLogisticClassifier(BaseEstimator):
 
         predictions = self.predict(X)
         return HealthStateView(index=index, states=predictions)
-

@@ -186,19 +186,19 @@ class IQRScorer(BaseScorer):
             # Compute distances for all samples at once
             dist_lower = np.maximum(0, lower_bound - values)  # (n_samples, n_features)
             dist_upper = np.maximum(0, values - upper_bound)  # (n_samples, n_features)
-            
+
             # Max distance across features for each sample
             max_dist_lower = np.max(dist_lower, axis=1)  # (n_samples,)
             max_dist_upper = np.max(dist_upper, axis=1)  # (n_samples,)
-            
+
             # Check if any feature is outside bounds for each sample
             is_outlier = np.any(outlier_mask, axis=1)  # (n_samples,)
-            
+
             # For outliers: use max distance from bounds
             # For normal: use negative min distance to nearest bound
             outlier_scores = np.maximum(max_dist_lower, max_dist_upper)
             normal_scores = -np.minimum(max_dist_lower, max_dist_upper)
-            
+
             # Normalize by max IQR
             scale = self.iqr_.max() + 1e-10
             scores = np.where(is_outlier, outlier_scores / scale, normal_scores / scale)
@@ -207,4 +207,3 @@ class IQRScorer(BaseScorer):
             scores = np.where(outlier_mask, 1.0, 0.0).astype(float)
 
         return ScoreView(index=index, scores=scores)
-

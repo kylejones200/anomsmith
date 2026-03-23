@@ -7,7 +7,11 @@ import pandas as pd
 
 from timesmith.typing import PanelLike, SeriesLike
 
-from anomsmith.objects.validate import assert_monotonic_index, assert_panel, assert_series
+from anomsmith.objects.validate import (
+    assert_monotonic_index,
+    assert_panel,
+    assert_series,
+)
 
 # Type aliases
 SeriesView = SeriesLike
@@ -32,10 +36,12 @@ def make_series_view(y: Union[pd.Series, np.ndarray, SeriesLike]) -> SeriesLike:
         # Convert DataFrame to Series if needed
         if isinstance(y, pd.DataFrame):
             if y.shape[1] != 1:
-                raise ValueError(f"DataFrame must have exactly one column, got {y.shape[1]}")
+                raise ValueError(
+                    f"DataFrame must have exactly one column, got {y.shape[1]}"
+                )
             return y.iloc[:, 0]
         return y
-    
+
     # Convert numpy array to Series
     if isinstance(y, np.ndarray):
         if y.ndim != 1:
@@ -44,7 +50,7 @@ def make_series_view(y: Union[pd.Series, np.ndarray, SeriesLike]) -> SeriesLike:
         series = pd.Series(y, index=index)
         assert_series(series)
         return series
-    
+
     raise ValueError(f"Expected pd.Series, np.ndarray, or SeriesLike, got {type(y)}")
 
 
@@ -75,7 +81,7 @@ def make_panel_view(
             y = y.reindex(columns=time_index) if not y.columns.equals(time_index) else y
         assert_panel(y)
         return y
-    
+
     # Convert numpy array to DataFrame
     if isinstance(y, np.ndarray):
         if y.ndim != 2:
@@ -87,6 +93,5 @@ def make_panel_view(
         df = pd.DataFrame(y, index=entity_key, columns=time_index)
         assert_panel(df)
         return df
-    
-    raise ValueError(f"Expected pd.DataFrame, np.ndarray, or PanelLike, got {type(y)}")
 
+    raise ValueError(f"Expected pd.DataFrame, np.ndarray, or PanelLike, got {type(y)}")

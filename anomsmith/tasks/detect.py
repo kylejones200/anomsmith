@@ -20,12 +20,17 @@ except ImportError:
 # Try to use timesmith's DetectTask if available
 try:
     from timesmith.tasks import DetectTask as TimesmithDetectTask
+
     # Use timesmith's DetectTask if it exists and is compatible
     DetectTask = TimesmithDetectTask  # type: ignore
 except (ImportError, AttributeError):
     # Fallback to our own DetectTask
-    _SeriesLikeType = Union[pd.Series, np.ndarray] if SeriesLike is None else Union[pd.Series, np.ndarray, SeriesLike]
-    
+    _SeriesLikeType = (
+        Union[pd.Series, np.ndarray]
+        if SeriesLike is None
+        else Union[pd.Series, np.ndarray, SeriesLike]
+    )
+
     @dataclass
     class DetectTask:
         """Task specification for anomaly detection.
@@ -110,7 +115,4 @@ def run_detection(
         label_view = LabelView(index=series_view.index, labels=empty_labels)
         return label_view, score_view
     else:
-        raise ValueError(
-            f"Expected BaseDetector or BaseScorer, got {type(detector)}"
-        )
-
+        raise ValueError(f"Expected BaseDetector or BaseScorer, got {type(detector)}")

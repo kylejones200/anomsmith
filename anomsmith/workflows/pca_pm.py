@@ -48,8 +48,10 @@ def track_mahalanobis_distance(
         >>> # Track distance over time to detect drift
     """
     if not detector._fitted:
-        raise ValueError("PCADetector must be fitted before tracking Mahalanobis distance.")
-    
+        raise ValueError(
+            "PCADetector must be fitted before tracking Mahalanobis distance."
+        )
+
     # Score using Mahalanobis distance
     if isinstance(X, pd.DataFrame):
         index = X.index
@@ -63,18 +65,18 @@ def track_mahalanobis_distance(
     # Transform data to PCA space and compute Mahalanobis distance manually
     X_scaled = detector.scaler_.transform(X_data)  # type: ignore
     X_pca = detector.pca_.transform(X_scaled)  # type: ignore
-    
+
     # Compute Mahalanobis distance in PC space
     if detector.mean_ is None or detector.cov_ is None:
         raise ValueError(
             "PCADetector must be fitted with mean_ and cov_ computed. "
             "Ensure detector was fitted properly with mahalanobis support."
         )
-    
+
     # Vectorized Mahalanobis distance calculation
     # Mahalanobis distance: sqrt((x - mu)^T * Sigma^-1 * (x - mu))
     diff = X_pca - detector.mean_  # Shape: (n_samples, n_components)
-    
+
     try:
         inv_cov = np.linalg.inv(detector.cov_)
     except np.linalg.LinAlgError:
@@ -268,4 +270,3 @@ def compute_pca_health_thresholds(
         f"(percentile {warning_percentile})"
     )
     return float(healthy_threshold), float(warning_threshold)
-

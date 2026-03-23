@@ -94,14 +94,16 @@ class LogisticHazardModel(CoxSurvivalModel):
         """
         if X is None:
             raise ValueError("X (feature matrix) is required for LogisticHazardModel")
-        
+
         if isinstance(X, pd.DataFrame):
             X_data = X.values.astype("float32")
         else:
             X_data = np.asarray(X, dtype="float32")
 
         durations_array = np.asarray(durations)
-        events_array = np.asarray(events) if events is not None else np.ones(len(durations))
+        events_array = (
+            np.asarray(events) if events is not None else np.ones(len(durations))
+        )
 
         self.n_features_ = X_data.shape[1]
 
@@ -119,12 +121,18 @@ class LogisticHazardModel(CoxSurvivalModel):
 
         # Create model
         self.model_ = LogisticHazard(  # type: ignore
-            net, tt.optim.Adam, duration_index=self.labtrans_.cuts  # type: ignore
+            net,
+            tt.optim.Adam,
+            duration_index=self.labtrans_.cuts,  # type: ignore
         )
 
         # Train
         self.model_.fit(  # type: ignore
-            X_data, y_train_disc, batch_size=self.batch_size, epochs=self.epochs, verbose=False
+            X_data,
+            y_train_disc,
+            batch_size=self.batch_size,
+            epochs=self.epochs,
+            verbose=False,
         )
 
         self._fitted = True
@@ -135,7 +143,9 @@ class LogisticHazardModel(CoxSurvivalModel):
         return self
 
     def predict_survival_function(
-        self, X: Union[np.ndarray, pd.DataFrame], time_points: Optional[np.ndarray] = None
+        self,
+        X: Union[np.ndarray, pd.DataFrame],
+        time_points: Optional[np.ndarray] = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t|X).
 
@@ -182,7 +192,11 @@ class LogisticHazardModel(CoxSurvivalModel):
 
         # Use negative median survival time as risk score
         surv_df = self.predict_survival_function(X_data)
-        median_survival = surv_df.apply(lambda col: col.index[col <= 0.5][0] if (col <= 0.5).any() else col.index[-1])
+        median_survival = surv_df.apply(
+            lambda col: (
+                col.index[col <= 0.5][0] if (col <= 0.5).any() else col.index[-1]
+            )
+        )
         # Higher median survival = lower risk
         risk_scores = -median_survival.values
         return risk_scores
@@ -212,8 +226,7 @@ class DeepSurvModel(CoxSurvivalModel):
         """Initialize DeepSurv model."""
         if not PYCOX_AVAILABLE:
             raise ImportError(
-                "pycox is required for DeepSurvModel. "
-                "Install with: pip install pycox"
+                "pycox is required for DeepSurvModel. Install with: pip install pycox"
             )
 
         super().__init__(random_state=random_state)
@@ -243,14 +256,16 @@ class DeepSurvModel(CoxSurvivalModel):
         """
         if X is None:
             raise ValueError("X (feature matrix) is required for DeepSurvModel")
-        
+
         if isinstance(X, pd.DataFrame):
             X_data = X.values.astype("float32")
         else:
             X_data = np.asarray(X, dtype="float32")
 
         durations_array = np.asarray(durations)
-        events_array = np.asarray(events) if events is not None else np.ones(len(durations))
+        events_array = (
+            np.asarray(events) if events is not None else np.ones(len(durations))
+        )
 
         self.n_features_ = X_data.shape[1]
 
@@ -284,7 +299,9 @@ class DeepSurvModel(CoxSurvivalModel):
         return self
 
     def predict_survival_function(
-        self, X: Union[np.ndarray, pd.DataFrame], time_points: Optional[np.ndarray] = None
+        self,
+        X: Union[np.ndarray, pd.DataFrame],
+        time_points: Optional[np.ndarray] = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t|X).
 
@@ -332,4 +349,3 @@ class DeepSurvModel(CoxSurvivalModel):
         # DeepSurv outputs log-hazard, exponentiate to get hazard ratio
         risk_scores = self.model_.predict(X_data)  # type: ignore
         return risk_scores.flatten()
-

@@ -44,7 +44,9 @@ def save_model(
         >>> save_model(scorer, "models/robust_zscore_v1", metadata={"version": "1.0"})
     """
     if not model.is_fitted:
-        raise ValueError(f"Model {model.__class__.__name__} must be fitted before saving.")
+        raise ValueError(
+            f"Model {model.__class__.__name__} must be fitted before saving."
+        )
 
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
@@ -74,6 +76,10 @@ def save_model(
 
 def load_model(path: Union[str, Path]) -> BaseEstimator:
     """Load an anomsmith model from disk.
+
+    .. warning::
+        Models are loaded using pickle. Only load from trusted sources.
+        Unpickling data from untrusted origins can execute arbitrary code.
 
     Args:
         path: Directory path where model was saved
@@ -184,7 +190,9 @@ def export_model_for_sagemaker(
         f.write("\n".join(requirements))
 
     # Generate upload command
-    upload_command = f"aws s3 sync {local_path} {s3_path} --exclude '*.pyc' --exclude '__pycache__'"
+    upload_command = (
+        f"aws s3 sync {local_path} {s3_path} --exclude '*.pyc' --exclude '__pycache__'"
+    )
 
     return {
         "local_path": str(local_path),
@@ -318,9 +326,9 @@ def _generate_requirements(model: BaseEstimator) -> list[str]:
     # Check for timesmith dependency
     try:
         import timesmith
+
         requirements.append("timesmith>=0.1.0,<1.0.0")
     except ImportError:
         pass
 
     return sorted(set(requirements))
-

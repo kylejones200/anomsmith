@@ -94,13 +94,19 @@ def predict_health_states_from_survival(
     rul_series = predict_rul_from_survival(model, X, threshold=threshold, index=index)
 
     # Discretize to health states using the primitive directly
-    from anomsmith.primitives.health_state.discretize import discretize_rul_to_health_states
-
-    health_states = discretize_rul_to_health_states(
-        rul_series, healthy_threshold=healthy_threshold, warning_threshold=warning_threshold
+    from anomsmith.primitives.health_state.discretize import (
+        discretize_rul_to_health_states,
     )
 
-    logger.info(f"Predicted health states from survival model: {len(health_states.states)} samples")
+    health_states = discretize_rul_to_health_states(
+        rul_series,
+        healthy_threshold=healthy_threshold,
+        warning_threshold=warning_threshold,
+    )
+
+    logger.info(
+        f"Predicted health states from survival model: {len(health_states.states)} samples"
+    )
     return health_states
 
 
@@ -158,7 +164,9 @@ def fit_survival_model_for_maintenance(
 
             model = DeepSurvModel(**model_kwargs)
         except ImportError:
-            raise ImportError("pycox is required for DeepSurv. Install with: pip install pycox")
+            raise ImportError(
+                "pycox is required for DeepSurv. Install with: pip install pycox"
+            )
     else:
         raise ValueError(
             f"Unknown model_type: {model_type}. "
@@ -223,4 +231,3 @@ def compare_survival_models(
             results.append({"model": model_name, "c_index": np.nan, "error": str(e)})
 
     return pd.DataFrame(results)
-

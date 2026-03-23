@@ -74,4 +74,3 @@ class RobustZScoreScorer(BaseScorer):
         abs_z_scores = np.abs(z_scores)
 
         return ScoreView(index=index, scores=abs_z_scores)
-

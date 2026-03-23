@@ -196,4 +196,3 @@ class BaseDetector(BaseEstimator):
             ScoreView with anomaly scores
         """
         pass
-

@@ -57,7 +57,9 @@ class CoxSurvivalModel(BaseEstimator):
         raise NotImplementedError("Subclasses must implement fit method")
 
     def predict_survival_function(
-        self, X: Union[np.ndarray, pd.DataFrame], time_points: Optional[np.ndarray] = None
+        self,
+        X: Union[np.ndarray, pd.DataFrame],
+        time_points: Optional[np.ndarray] = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t|X).
 
@@ -68,7 +70,9 @@ class CoxSurvivalModel(BaseEstimator):
         Returns:
             DataFrame with survival probabilities (rows = time points, cols = samples)
         """
-        raise NotImplementedError("Subclasses must implement predict_survival_function method")
+        raise NotImplementedError(
+            "Subclasses must implement predict_survival_function method"
+        )
 
     def predict_risk_score(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
         """Predict relative risk scores (hazard ratios).
@@ -99,19 +103,19 @@ class CoxSurvivalModel(BaseEstimator):
         # Vectorized: find time point where survival probability crosses threshold
         time_index = surv_df.index.values
         surv_values = surv_df.values  # Shape: (n_time_points, n_samples)
-        
+
         # For each sample (column), find first time where survival < threshold
         below_threshold = surv_values < threshold  # Shape: (n_time_points, n_samples)
-        
+
         # Find first index where below_threshold is True for each sample
         # argmax finds first True (since False=0, True=1)
         # If no True values, argmax returns 0, which we need to handle
         ttf_indices = np.argmax(below_threshold, axis=0)  # Shape: (n_samples,)
-        
+
         # Handle case where no value is below threshold: use last index
         all_above_threshold = ~below_threshold.any(axis=0)
         ttf_indices[all_above_threshold] = len(time_index) - 1
-        
+
         # Handle case where first value is below threshold correctly
         # If first is below, it's valid - use it. Otherwise argmax handles it.
         first_below = below_threshold[0, :]
@@ -119,7 +123,6 @@ class CoxSurvivalModel(BaseEstimator):
         # Actually, argmax behavior: returns 0 if no True, so we need to check
         # If first is False but argmax is 0, then no values below threshold
         # This is already handled by all_above_threshold check
-        
+
         ttf = time_index[ttf_indices]
         return ttf
-

@@ -134,4 +134,3 @@ class TestBacktestDetector:
         assert "fold" in results.columns
         assert "f1" in results.columns
         assert not results["f1"].isna().all()
-

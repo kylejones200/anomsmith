@@ -82,7 +82,7 @@ class LifelinesCoxModel(CoxSurvivalModel):
         """
         if X is None:
             raise ValueError("X (feature matrix) is required for LifelinesCoxModel")
-        
+
         if isinstance(X, pd.DataFrame):
             X_df = X.copy()
             self.feature_names_ = list(X.columns)
@@ -103,7 +103,9 @@ class LifelinesCoxModel(CoxSurvivalModel):
         return self
 
     def predict_survival_function(
-        self, X: Union[np.ndarray, pd.DataFrame], time_points: Optional[np.ndarray] = None
+        self,
+        X: Union[np.ndarray, pd.DataFrame],
+        time_points: Optional[np.ndarray] = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t|X).
 
@@ -159,4 +161,3 @@ class LifelinesCoxModel(CoxSurvivalModel):
 
         partial_hazards = self.model_.predict_partial_hazard(X_df)  # type: ignore
         return partial_hazards.values.flatten()
-

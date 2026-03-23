@@ -106,7 +106,9 @@ class LSTMDistressClassifier:
             Self for method chaining
         """
         if sequences.ndim != 3:
-            raise ValueError(f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}")
+            raise ValueError(
+                f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}"
+            )
 
         n_samples, window_size, n_features = sequences.shape
         if n_features != self.n_features:
@@ -117,10 +119,12 @@ class LSTMDistressClassifier:
             self.n_features = n_features
 
         # Build LSTM model
-        self.model_ = models.Sequential([  # type: ignore
-            layers.LSTM(self.lstm_units, input_shape=(window_size, n_features)),  # type: ignore
-            layers.Dense(1, activation="sigmoid"),  # type: ignore
-        ])
+        self.model_ = models.Sequential(
+            [  # type: ignore
+                layers.LSTM(self.lstm_units, input_shape=(window_size, n_features)),  # type: ignore
+                layers.Dense(1, activation="sigmoid"),  # type: ignore
+            ]
+        )
         self.model_.compile(  # type: ignore
             optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"]
         )
@@ -176,7 +180,9 @@ class LSTMDistressClassifier:
             raise ValueError("Classifier must be fitted before prediction.")
 
         if sequences.ndim != 3:
-            raise ValueError(f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}")
+            raise ValueError(
+                f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}"
+            )
 
         # Predict probabilities
         probas = self.model_.predict(sequences, verbose=0).flatten()  # type: ignore
@@ -204,7 +210,9 @@ class LSTMDistressClassifier:
             raise ValueError("Classifier must be fitted before prediction.")
 
         if sequences.ndim != 3:
-            raise ValueError(f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}")
+            raise ValueError(
+                f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}"
+            )
 
         probas = self.model_.predict(sequences, verbose=0).flatten()  # type: ignore
         return probas
@@ -271,7 +279,9 @@ class AttentionLSTMDistressClassifier:
             Self for method chaining
         """
         if sequences.ndim != 3:
-            raise ValueError(f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}")
+            raise ValueError(
+                f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}"
+            )
 
         n_samples, window_size, n_features = sequences.shape
         if n_features != self.n_features:
@@ -288,7 +298,9 @@ class AttentionLSTMDistressClassifier:
         class AttentionWithWeights(layers.Layer):  # type: ignore
             def build(self, input_shape):
                 self.W = self.add_weight(
-                    shape=(input_shape[-1], 1), initializer="random_normal", trainable=True
+                    shape=(input_shape[-1], 1),
+                    initializer="random_normal",
+                    trainable=True,
                 )
 
             def call(self, inputs):
@@ -379,7 +391,9 @@ class AttentionLSTMDistressClassifier:
             raise ValueError("Classifier must be fitted before prediction.")
 
         if sequences.ndim != 3:
-            raise ValueError(f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}")
+            raise ValueError(
+                f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}"
+            )
 
         # Predict probabilities
         pred_dict = self.model_.predict(sequences, verbose=0)  # type: ignore
@@ -408,7 +422,9 @@ class AttentionLSTMDistressClassifier:
             raise ValueError("Classifier must be fitted before prediction.")
 
         if sequences.ndim != 3:
-            raise ValueError(f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}")
+            raise ValueError(
+                f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}"
+            )
 
         pred_dict = self.model_.predict(sequences, verbose=0)  # type: ignore
         probas = pred_dict["pred"].flatten()
@@ -424,11 +440,14 @@ class AttentionLSTMDistressClassifier:
             Array of shape (n_samples, window_size) with attention weights
         """
         if not self._fitted:
-            raise ValueError("Classifier must be fitted before getting attention weights.")
+            raise ValueError(
+                "Classifier must be fitted before getting attention weights."
+            )
 
         if sequences.ndim != 3:
-            raise ValueError(f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}")
+            raise ValueError(
+                f"Sequences must be 3D (n_samples, window_size, n_features), got shape {sequences.shape}"
+            )
 
         pred_dict = self.model_.predict(sequences, verbose=0)  # type: ignore
         return pred_dict["attn"]
-

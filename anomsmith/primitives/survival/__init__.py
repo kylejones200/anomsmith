@@ -29,4 +29,3 @@ except ImportError:
         "LogisticHazardModel",
         "DeepSurvModel",
     ]
-

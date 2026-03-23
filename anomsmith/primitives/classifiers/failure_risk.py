@@ -132,7 +132,9 @@ class FailureRiskClassifier:
         # Convert to health states
         states = np.zeros(len(risk_proba), dtype=int)
         states[risk_proba > distress_threshold] = HealthState.DISTRESS
-        states[(risk_proba > risk_threshold) & (risk_proba <= distress_threshold)] = HealthState.WARNING
+        states[(risk_proba > risk_threshold) & (risk_proba <= distress_threshold)] = (
+            HealthState.WARNING
+        )
 
         return HealthStateView(index=index, states=states)
 
@@ -175,4 +177,3 @@ class FailureRiskClassifier:
 
         X_scaled = self.scaler_.transform(X_data)
         return self.classifier_.predict(X_scaled)
-

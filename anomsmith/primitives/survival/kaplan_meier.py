@@ -82,7 +82,9 @@ class KaplanMeierModel(CoxSurvivalModel):
             Self for method chaining
         """
         durations_array = np.asarray(durations)
-        events_array = np.asarray(events) if events is not None else np.ones(len(durations))
+        events_array = (
+            np.asarray(events) if events is not None else np.ones(len(durations))
+        )
 
         # Store for later use
         self.durations_ = durations_array
@@ -100,7 +102,9 @@ class KaplanMeierModel(CoxSurvivalModel):
         return self
 
     def predict_survival_function(
-        self, X: Union[np.ndarray, pd.DataFrame, None] = None, time_points: Optional[np.ndarray] = None
+        self,
+        X: Union[np.ndarray, pd.DataFrame, None] = None,
+        time_points: Optional[np.ndarray] = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t).
 
@@ -120,7 +124,9 @@ class KaplanMeierModel(CoxSurvivalModel):
             # Use all time points from the fitted model
             survival_function = self.model_.survival_function_  # type: ignore
             time_index = survival_function.index
-            surv_values = survival_function.iloc[:, 0].values  # Single column for all samples
+            surv_values = survival_function.iloc[
+                :, 0
+            ].values  # Single column for all samples
         else:
             # Interpolate to requested time points
             survival_function = self.model_.survival_function_  # type: ignore
@@ -140,7 +146,9 @@ class KaplanMeierModel(CoxSurvivalModel):
         surv_matrix = np.tile(surv_values.reshape(-1, 1), (1, n_samples))
         return pd.DataFrame(surv_matrix, index=time_index, columns=range(n_samples))
 
-    def predict_risk_score(self, X: Union[np.ndarray, pd.DataFrame, None] = None) -> np.ndarray:
+    def predict_risk_score(
+        self, X: Union[np.ndarray, pd.DataFrame, None] = None
+    ) -> np.ndarray:
         """Predict risk scores.
 
         Note: Kaplan-Meier doesn't provide per-sample risk scores since
@@ -166,7 +174,9 @@ class KaplanMeierModel(CoxSurvivalModel):
         # Return constant risk score for all samples
         return np.full(n_samples, -median_survival)
 
-    def predict(self, time_points: Union[float, int, np.ndarray, pd.Series]) -> Union[float, np.ndarray]:
+    def predict(
+        self, time_points: Union[float, int, np.ndarray, pd.Series]
+    ) -> Union[float, np.ndarray]:
         """Predict survival probability at specific time points.
 
         This is the main prediction method for Kaplan-Meier.
@@ -188,7 +198,11 @@ class KaplanMeierModel(CoxSurvivalModel):
         else:
             time_array = np.asarray(time_points)
             predictions = self.model_.predict(time_array)  # type: ignore
-            return predictions.values if isinstance(predictions, pd.Series) else predictions
+            return (
+                predictions.values
+                if isinstance(predictions, pd.Series)
+                else predictions
+            )
 
     def qth_survival_time(self, q: float) -> float:
         """Find time point where survival probability equals q (e.g., q=0.99 for 99% survival).
@@ -222,4 +236,3 @@ class KaplanMeierModel(CoxSurvivalModel):
         self._check_fitted()
 
         return self.model_.plot(ax=ax, ci_show=ci_show, **kwargs)  # type: ignore
-

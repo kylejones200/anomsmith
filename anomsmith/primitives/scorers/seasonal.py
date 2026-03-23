@@ -94,10 +94,14 @@ class SeasonalBaselineScorer(BaseScorer):
         df = pd.DataFrame({"value": values, "date": index})
         df["seasonal_key"] = self._get_seasonal_key(index)
 
-        seasonal_stats = df.groupby("seasonal_key").agg({"value": ["mean", "std"]}).reset_index()
+        seasonal_stats = (
+            df.groupby("seasonal_key").agg({"value": ["mean", "std"]}).reset_index()
+        )
         seasonal_stats.columns = ["seasonal_key", "mean", "std"]
         seasonal_stats["std"] = seasonal_stats["std"].fillna(0)
-        seasonal_stats["std"] = seasonal_stats["std"].replace(0, 1.0)  # Avoid division by zero
+        seasonal_stats["std"] = seasonal_stats["std"].replace(
+            0, 1.0
+        )  # Avoid division by zero
         self.seasonal_stats_ = seasonal_stats
 
         self._fitted = True
@@ -142,4 +146,3 @@ class SeasonalBaselineScorer(BaseScorer):
         scores = z_scores.fillna(0).values
 
         return ScoreView(index=index, scores=scores)
-

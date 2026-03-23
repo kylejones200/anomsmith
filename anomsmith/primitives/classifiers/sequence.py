@@ -124,7 +124,9 @@ class SequenceDistressClassifier:
         if probas.shape[1] > 1:
             distress_proba = probas[:, 1]  # Probability of distress class
             states[distress_proba > 0.8] = HealthState.DISTRESS
-            states[(distress_proba > 0.5) & (distress_proba <= 0.8)] = HealthState.WARNING
+            states[(distress_proba > 0.5) & (distress_proba <= 0.8)] = (
+                HealthState.WARNING
+            )
         else:
             # Binary case
             states[probas[:, 0] > 0.5] = HealthState.WARNING
@@ -206,4 +208,3 @@ def create_sequences(
         labels_array = (labels_array > 0).astype(int)
 
     return sequences_array, labels_array
-

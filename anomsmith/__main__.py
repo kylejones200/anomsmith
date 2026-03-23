@@ -9,7 +9,10 @@ def main() -> int:
     Currently provides a minimal entry point. Extend for future CLI features.
     """
     print("anomsmith: Anomaly detection workflows", file=sys.stderr)
-    print("Usage: Use as a library - from anomsmith import detect_anomalies, ...", file=sys.stderr)
+    print(
+        "Usage: Use as a library - from anomsmith import detect_anomalies, ...",
+        file=sys.stderr,
+    )
     return 0
 
 

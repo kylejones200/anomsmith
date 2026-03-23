@@ -25,7 +25,9 @@ class ChangePointDetector(BaseDetector):
     Uses mean and std deviation in rolling windows.
     """
 
-    def __init__(self, window_size: int = 10, threshold_multiplier: float = 3.0) -> None:
+    def __init__(
+        self, window_size: int = 10, threshold_multiplier: float = 3.0
+    ) -> None:
         """Initialize ChangePointDetector.
 
         Args:
@@ -36,7 +38,9 @@ class ChangePointDetector(BaseDetector):
         self.threshold_multiplier = threshold_multiplier
         self._global_mean: float = 0.0
         self._global_std: float = 1.0
-        super().__init__(window_size=window_size, threshold_multiplier=threshold_multiplier)
+        super().__init__(
+            window_size=window_size, threshold_multiplier=threshold_multiplier
+        )
         self._fitted = False
 
     def fit(
@@ -95,11 +99,15 @@ class ChangePointDetector(BaseDetector):
         # Use center=False to avoid future information leakage (causal detection)
         # Convert to Series for rolling operations
         series = pd.Series(values)
-        
+
         # Compute rolling statistics (vectorized, causal - no future information)
         # center=False ensures we only use past/current values, not future
-        rolling_mean = series.rolling(window=self.window_size, center=False, min_periods=1).mean()
-        rolling_std = series.rolling(window=self.window_size, center=False, min_periods=1).std()
+        rolling_mean = series.rolling(
+            window=self.window_size, center=False, min_periods=1
+        ).mean()
+        rolling_std = series.rolling(
+            window=self.window_size, center=False, min_periods=1
+        ).std()
         # Handle zero std (avoid division by zero)
         rolling_std = rolling_std.fillna(1.0).replace(0.0, 1.0).values
 
@@ -126,4 +134,3 @@ class ChangePointDetector(BaseDetector):
         labels = (score_view.scores >= threshold).astype(int)
 
         return LabelView(index=score_view.index, labels=labels)
-

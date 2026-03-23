@@ -24,7 +24,7 @@ from anomsmith.objects.window import WindowSpec
 # Re-export timesmith types if available
 try:
     from timesmith.typing import PanelLike, SeriesLike
-    
+
     __all__ = [
         "SeriesView",  # Alias for SeriesLike
         "PanelView",  # Alias for PanelLike
@@ -54,4 +54,3 @@ except ImportError:
         "ActionView",
         "PolicyResult",
     ]
-

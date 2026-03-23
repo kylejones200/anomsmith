@@ -67,4 +67,3 @@ class LabelView:
             raise ValueError(
                 f"Labels must be binary (0 or 1), got unique values {unique_vals}"
             )
-

@@ -73,9 +73,13 @@ def assert_aligned(
     """
     # Check types - SeriesLike can be pd.Series or pd.DataFrame
     if not isinstance(view1, (pd.Series, pd.DataFrame, ScoreView, LabelView)):
-        raise ValueError(f"Expected SeriesLike, ScoreView, or LabelView, got {type(view1)}")
+        raise ValueError(
+            f"Expected SeriesLike, ScoreView, or LabelView, got {type(view1)}"
+        )
     if not isinstance(view2, (pd.Series, pd.DataFrame, ScoreView, LabelView)):
-        raise ValueError(f"Expected SeriesLike, ScoreView, or LabelView, got {type(view2)}")
+        raise ValueError(
+            f"Expected SeriesLike, ScoreView, or LabelView, got {type(view2)}"
+        )
 
     index1 = view1.index
     index2 = view2.index
@@ -105,4 +109,3 @@ def assert_monotonic_index(index: pd.Index) -> None:
 
     if not index.is_monotonic_increasing:
         raise ValueError(f"Index must be monotonic (non-decreasing), got {index}")
-
