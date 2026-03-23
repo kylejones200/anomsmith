@@ -99,8 +99,15 @@ def sweep_thresholds(
 
     # Pre-compute aligned labels once if provided
     if labels is not None:
-        aligned_labels = labels.reindex(score_view.index, fill_value=0).values
-        aligned_labels = (aligned_labels != 0).astype(int)
+        if isinstance(labels, pd.Series):
+            aligned_labels = labels.reindex(score_view.index, fill_value=0).values
+        else:
+            labels_arr = np.asarray(labels)
+            if len(labels_arr) != len(score_view.index):
+                raise ValueError(
+                    f"labels length ({len(labels_arr)}) must match y length ({len(score_view.index)})"
+                )
+            aligned_labels = (labels_arr != 0).astype(int)
 
         from anomsmith.workflows.eval.metrics import (
             compute_f1,

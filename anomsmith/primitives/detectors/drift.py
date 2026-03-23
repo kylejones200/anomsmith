@@ -147,9 +147,7 @@ class ARIMADriftDetector(BaseDetector):
             scores = np.concatenate([[0.0], scores])
         except Exception as e:
             logger.error(f"Error generating ARIMA forecast: {e}")
-            # Fallback: return zeros
-            scores = np.zeros(len(values))
-            logger.warning("Failed to compute ARIMA scores, returning zeros")
+            raise
 
         return ScoreView(index=index, scores=scores)
 

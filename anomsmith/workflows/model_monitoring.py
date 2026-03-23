@@ -5,7 +5,7 @@ Azure Monitor, or GCP Cloud Monitoring.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 import numpy as np
@@ -222,7 +222,7 @@ def aggregate_metrics_for_cloudwatch(
         ... )
     """
     if timestamp is None:
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
 
     cloudwatch_metrics = []
 
@@ -291,6 +291,7 @@ class ModelPerformanceTracker:
         """
         self.window_size = window_size
         self.model_name = model_name
+        self._metrics_rows: list[dict[str, Any]] = []
         self.metrics_history: pd.DataFrame = pd.DataFrame()
         self.score_history: list[float] = []
         self.label_history: list[int] = []
@@ -315,7 +316,7 @@ class ModelPerformanceTracker:
             Current performance metrics
         """
         if timestamp is None:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
 
         # Convert to arrays
         if isinstance(scores, pd.Series):
@@ -365,13 +366,11 @@ class ModelPerformanceTracker:
         # Add timestamp
         metrics["timestamp"] = timestamp
 
-        # Update history DataFrame
-        new_row = pd.DataFrame([metrics])
-        self.metrics_history = pd.concat([self.metrics_history, new_row], ignore_index=True)
-
-        # Keep only recent window in DataFrame
-        if len(self.metrics_history) > self.window_size:
-            self.metrics_history = self.metrics_history.tail(self.window_size).reset_index(drop=True)
+        # Update history (avoid pd.concat in loop; use list + single DataFrame build)
+        self._metrics_rows.append(metrics)
+        if len(self._metrics_rows) > self.window_size:
+            self._metrics_rows = self._metrics_rows[-self.window_size :]
+        self.metrics_history = pd.DataFrame(self._metrics_rows)
 
         return metrics
 

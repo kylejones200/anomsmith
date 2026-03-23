@@ -25,8 +25,6 @@ logger = logging.getLogger(__name__)
 def batch_score(
     data_iterator: Iterator[Union[np.ndarray, pd.Series, pd.DataFrame]],
     scorer: BaseScorer,
-    batch_size: int = 1000,
-    return_index: bool = True,
 ) -> Iterator[ScoreView]:
     """Score anomalies in batches for efficient processing of large datasets.
 
@@ -36,8 +34,6 @@ def batch_score(
     Args:
         data_iterator: Iterator yielding batches of time series data
         scorer: Fitted BaseScorer instance
-        batch_size: Number of samples per batch (default 1000)
-        return_index: Whether to preserve index in results (default True)
 
     Yields:
         ScoreView for each batch
@@ -55,33 +51,20 @@ def batch_score(
         raise ValueError("Scorer must be fitted before batch scoring.")
 
     for batch_idx, batch_data in enumerate(data_iterator):
-        try:
-            score_view = scorer.score(batch_data)
-            logger.debug(f"Scored batch {batch_idx}: {len(score_view.scores)} samples")
-            yield score_view
-        except Exception as e:
-            logger.error(f"Error scoring batch {batch_idx}: {e}")
-            # Yield empty scores on error
-            if isinstance(batch_data, pd.Series):
-                index = batch_data.index
-            else:
-                index = pd.RangeIndex(start=0, stop=len(batch_data))
-            yield ScoreView(index=index, scores=np.zeros(len(index)))
+        score_view = scorer.score(batch_data)
+        logger.debug(f"Scored batch {batch_idx}: {len(score_view.scores)} samples")
+        yield score_view
 
 
 def batch_predict(
     data_iterator: Iterator[Union[np.ndarray, pd.Series, pd.DataFrame]],
     detector: BaseDetector,
-    batch_size: int = 1000,
-    return_index: bool = True,
 ) -> Iterator[tuple[LabelView, ScoreView]]:
     """Predict anomalies in batches for efficient processing.
 
     Args:
         data_iterator: Iterator yielding batches of time series data
         detector: Fitted BaseDetector instance
-        batch_size: Number of samples per batch (default 1000)
-        return_index: Whether to preserve index in results (default True)
 
     Yields:
         Tuple of (LabelView, ScoreView) for each batch
@@ -96,28 +79,17 @@ def batch_predict(
         raise ValueError("Detector must be fitted before batch prediction.")
 
     for batch_idx, batch_data in enumerate(data_iterator):
-        try:
-            label_view = detector.predict(batch_data)
-            score_view = detector.score(batch_data)
-            logger.debug(f"Predicted batch {batch_idx}: {len(label_view.labels)} samples")
-            yield (label_view, score_view)
-        except Exception as e:
-            logger.error(f"Error predicting batch {batch_idx}: {e}")
-            # Yield empty results on error
-            if isinstance(batch_data, pd.Series):
-                index = batch_data.index
-            else:
-                index = pd.RangeIndex(start=0, stop=len(batch_data))
-            empty_labels = LabelView(index=index, labels=np.zeros(len(index), dtype=int))
-            empty_scores = ScoreView(index=index, scores=np.zeros(len(index)))
-            yield (empty_labels, empty_scores)
+        label_view = detector.predict(batch_data)
+        score_view = detector.score(batch_data)
+        logger.debug(f"Predicted batch {batch_idx}: {len(label_view.labels)} samples")
+        yield (label_view, score_view)
 
 
 def process_s3_batch(
     s3_keys: list[str],
     model: Union[BaseScorer, BaseDetector],
+    bucket: str,
     s3_client=None,
-    bucket: Optional[str] = None,
 ) -> pd.DataFrame:
     """Process a batch of S3 files with anomaly detection.
 
@@ -127,8 +99,8 @@ def process_s3_batch(
     Args:
         s3_keys: List of S3 object keys to process
         model: Fitted model (BaseScorer or BaseDetector)
+        bucket: S3 bucket name (required)
         s3_client: Optional boto3 S3 client (will create if not provided)
-        bucket: S3 bucket name (required if s3_client not provided)
 
     Returns:
         DataFrame with results for all processed files
@@ -151,17 +123,9 @@ def process_s3_batch(
     if not model.is_fitted:
         raise ValueError("Model must be fitted before processing.")
 
-    if s3_client is None:
-        if bucket is None:
-            raise ValueError("Either s3_client or bucket must be provided.")
-        s3_client = boto3.client("s3")
 
-    if bucket is None:
-        # Extract bucket from first key if possible
-        if "/" in s3_keys[0]:
-            bucket = s3_keys[0].split("/")[0]
-        else:
-            raise ValueError("Bucket must be specified.")
+    if s3_client is None:
+        s3_client = boto3.client("s3")
 
     all_results = []
 

@@ -4,10 +4,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from anomsmith import RobustZScoreScorer, detect_anomalies, score_anomalies
 from anomsmith.primitives.detectors.change_point import ChangePointDetector
 from anomsmith.primitives.scorers.robust_zscore import RobustZScoreScorer
 from anomsmith.primitives.thresholding import ThresholdRule
-from anomsmith.workflows.detect import detect_anomalies, score_anomalies
+from anomsmith.workflows.detect import sweep_thresholds
 
 
 class TestScoreAnomalies:
@@ -68,5 +69,43 @@ class TestDetectAnomalies:
         assert "score" in result.columns
         assert "flag" in result.columns
         assert np.all(np.isin(result["flag"].values, [0, 1]))
+
+
+class TestSweepThresholds:
+    """Tests for sweep_thresholds workflow."""
+
+    def test_sweep_with_series_labels(self) -> None:
+        """Test sweep_thresholds with pandas Series labels."""
+        y = pd.Series(np.random.randn(100), index=pd.RangeIndex(100))
+        labels = pd.Series((np.random.rand(100) > 0.9).astype(int), index=y.index)
+        scorer = RobustZScoreScorer()
+        scorer.fit(y.values)
+        result = sweep_thresholds(y, scorer, [0.5, 1.0, 2.0], labels=labels)
+        assert "threshold" in result.columns
+        assert "precision" in result.columns
+        assert "recall" in result.columns
+        assert "f1" in result.columns
+        assert len(result) == 3
+
+    def test_sweep_with_ndarray_labels(self) -> None:
+        """Test sweep_thresholds with numpy array labels (regression for TD-004)."""
+        y = pd.Series(np.random.randn(100), index=pd.RangeIndex(100))
+        labels = (np.random.rand(100) > 0.9).astype(int)
+        scorer = RobustZScoreScorer()
+        scorer.fit(y.values)
+        result = sweep_thresholds(y, scorer, [0.5, 1.0, 2.0], labels=labels)
+        assert "threshold" in result.columns
+        assert "f1" in result.columns
+        assert len(result) == 3
+        assert not np.isnan(result["f1"]).all()
+
+    def test_sweep_without_labels(self) -> None:
+        """Test sweep_thresholds returns NaN metrics when labels not provided."""
+        y = pd.Series(np.random.randn(50))
+        scorer = RobustZScoreScorer()
+        scorer.fit(y.values)
+        result = sweep_thresholds(y, scorer, [1.0, 2.0])
+        assert result["precision"].isna().all()
+        assert result["recall"].isna().all()
 
 

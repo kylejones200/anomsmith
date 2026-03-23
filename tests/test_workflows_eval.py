@@ -120,3 +120,18 @@ class TestBacktestDetector:
         assert not results["recall"].isna().all()
         assert not results["f1"].isna().all()
 
+    def test_backtest_with_ndarray_y_and_labels(self) -> None:
+        """Test backtest_detector with numpy array y and labels (regression for TD-005)."""
+        y = np.random.randn(100)
+        labels = (np.random.rand(100) > 0.9).astype(int)
+        scorer = RobustZScoreScorer()
+        scorer.fit(y)
+        threshold_rule = ThresholdRule(method="quantile", value=0.95, quantile=0.95)
+        results = backtest_detector(
+            y, scorer, threshold_rule, labels=labels, n_splits=3, min_train_size=20
+        )
+        assert isinstance(results, pd.DataFrame)
+        assert "fold" in results.columns
+        assert "f1" in results.columns
+        assert not results["f1"].isna().all()
+

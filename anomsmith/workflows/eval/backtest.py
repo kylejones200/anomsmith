@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 from anomsmith.primitives.base import BaseDetector, BaseScorer
 from anomsmith.primitives.thresholding import ThresholdRule
+from anomsmith.tasks.helpers import make_series_view
 from anomsmith.workflows.detect import detect_anomalies
 from anomsmith.workflows.eval.metrics import (
     average_run_length,
@@ -143,8 +144,9 @@ def backtest_detector(
         pandas DataFrame with columns: fold, precision, recall, f1, avg_run_length
     """
     logger.info(f"Running backtest with {n_splits} splits")
+    y_series = make_series_view(y)
     splitter = ExpandingWindowSplit(n_splits=n_splits, min_train_size=min_train_size)
-    cutoffs = splitter.split(y)
+    cutoffs = splitter.split(y_series)
 
     # Pre-allocate arrays for results (faster than list.append())
     n_splits_actual = len(cutoffs)
@@ -156,8 +158,8 @@ def backtest_detector(
 
     for fold, (train_end, test_start) in enumerate(cutoffs):
         # Split data
-        y_train = y.iloc[:train_end]
-        y_test = y.iloc[test_start:]
+        y_train = y_series.iloc[:train_end]
+        y_test = y_series.iloc[test_start:]
 
         # Fit on training data
         detector.fit(y_train.values)
@@ -169,8 +171,16 @@ def backtest_detector(
         avg_run_lengths[fold] = average_run_length(result_df["flag"].values)
 
         if labels is not None:
-            # Align labels
-            labels_test = labels.reindex(y_test.index, fill_value=0).values
+            # Align labels (support Series and ndarray)
+            if isinstance(labels, pd.Series):
+                labels_test = labels.reindex(y_test.index, fill_value=0).values
+            else:
+                labels_arr = np.asarray(labels)
+                if len(labels_arr) != len(y_series):
+                    raise ValueError(
+                        f"labels length ({len(labels_arr)}) must match y length ({len(y_series)})"
+                    )
+                labels_test = labels_arr[test_start:]
             labels_test = (labels_test != 0).astype(int)
 
             precisions[fold] = compute_precision(labels_test, result_df["flag"].values)

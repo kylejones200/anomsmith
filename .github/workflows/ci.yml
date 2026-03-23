@@ -31,7 +31,7 @@ jobs:
       - name: Lint check (non-blocking)
         continue-on-error: true
         run: |
-          flake8 anomsmith/ tests/ --max-line-length=88 --extend-ignore=E203,W503,D200 || echo "Linting issues found (non-blocking)"
+          ruff check anomsmith/ tests/ || echo "Linting issues found (non-blocking)"
 
       - name: Type check (non-blocking)
         continue-on-error: true
