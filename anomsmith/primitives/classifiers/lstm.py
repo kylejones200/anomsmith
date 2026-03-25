@@ -24,6 +24,10 @@ except ImportError:
     EarlyStopping = None  # type: ignore
     ReduceLROnPlateau = None  # type: ignore
 
+from anomsmith.constants import (
+    DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD,
+    DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD,
+)
 from anomsmith.objects.health_state import HealthState, HealthStateView
 
 if TYPE_CHECKING:
@@ -187,10 +191,11 @@ class LSTMDistressClassifier:
         # Predict probabilities
         probas = self.model_.predict(sequences, verbose=0).flatten()  # type: ignore
 
-        # Convert to health states: 0.5 threshold for Warning, 0.8 for Distress
+        warn_t = DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD
+        distress_t = DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD
         states = np.zeros(len(probas), dtype=int)
-        states[probas > 0.8] = HealthState.DISTRESS
-        states[(probas > 0.5) & (probas <= 0.8)] = HealthState.WARNING
+        states[probas > distress_t] = HealthState.DISTRESS
+        states[(probas > warn_t) & (probas <= distress_t)] = HealthState.WARNING
 
         if index is None:
             index = pd.RangeIndex(start=0, stop=len(states))
@@ -399,10 +404,11 @@ class AttentionLSTMDistressClassifier:
         pred_dict = self.model_.predict(sequences, verbose=0)  # type: ignore
         probas = pred_dict["pred"].flatten()
 
-        # Convert to health states: 0.5 threshold for Warning, 0.8 for Distress
+        warn_t = DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD
+        distress_t = DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD
         states = np.zeros(len(probas), dtype=int)
-        states[probas > 0.8] = HealthState.DISTRESS
-        states[(probas > 0.5) & (probas <= 0.8)] = HealthState.WARNING
+        states[probas > distress_t] = HealthState.DISTRESS
+        states[(probas > warn_t) & (probas <= distress_t)] = HealthState.WARNING
 
         if index is None:
             index = pd.RangeIndex(start=0, stop=len(states))

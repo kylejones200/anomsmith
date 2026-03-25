@@ -19,6 +19,7 @@ except ImportError:
     ARIMA = None  # type: ignore
     sm = None  # type: ignore
 
+from anomsmith.constants import DEFAULT_DRIFT_DETECTION_STDDEV_THRESHOLD, NUMERICAL_EPSILON
 from anomsmith.objects.views import LabelView, ScoreView
 from anomsmith.primitives.base import BaseDetector
 
@@ -46,7 +47,7 @@ class ARIMADriftDetector(BaseDetector):
     def __init__(
         self,
         order: tuple[int, int, int] = (1, 1, 1),
-        threshold_std: float = 2.0,
+        threshold_std: float = DEFAULT_DRIFT_DETECTION_STDDEV_THRESHOLD,
         random_state: Optional[int] = None,
     ) -> None:
         """Initialize ARIMADriftDetector.
@@ -153,7 +154,7 @@ class ARIMADriftDetector(BaseDetector):
             # Compute residuals (actual - forecast)
             residuals = values[1:] - forecast
             # Score is absolute residual normalized by residual std
-            scores = np.abs(residuals) / (self.residual_std_ + 1e-10)
+            scores = np.abs(residuals) / (self.residual_std_ + NUMERICAL_EPSILON)
             # Pad first value (no prediction for first point)
             scores = np.concatenate([[0.0], scores])
         except Exception as e:

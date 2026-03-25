@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Optional, Union
 import numpy as np
 import pandas as pd
 
+from anomsmith.constants import DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF
 from anomsmith.primitives.base import BaseEstimator
 
 if TYPE_CHECKING:
@@ -88,13 +89,13 @@ class CoxSurvivalModel(BaseEstimator):
     def predict_time_to_failure(
         self,
         X: Union[np.ndarray, pd.DataFrame],
-        threshold: float = 0.5,
+        threshold: float = DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF,
     ) -> np.ndarray:
         """Predict median time-to-failure (where survival probability = threshold).
 
         Args:
             X: Feature matrix (n_samples, n_features)
-            threshold: Survival probability threshold (default 0.5)
+            threshold: Survival probability threshold (default ``DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF``)
 
         Returns:
             Array of predicted median time-to-failure

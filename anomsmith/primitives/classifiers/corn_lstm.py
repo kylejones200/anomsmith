@@ -33,6 +33,15 @@ except ImportError:
     corn_loss = None  # type: ignore
     corn_label_from_logits = None  # type: ignore
 
+from anomsmith.constants import (
+    DEFAULT_CORN_LSTM_BATCH_SIZE,
+    DEFAULT_CORN_LSTM_EPOCHS,
+    DEFAULT_CORN_LSTM_HIDDEN_SIZE,
+    DEFAULT_CORN_LSTM_INPUT_SIZE,
+    DEFAULT_CORN_LSTM_NUM_CLASSES,
+    DEFAULT_CORN_LSTM_SEQ_LEN,
+    DEFAULT_NEURAL_LEARNING_RATE,
+)
 from anomsmith.objects.health_state import HealthState, HealthStateView
 from anomsmith.primitives.base import BaseEstimator
 
@@ -71,7 +80,11 @@ if TORCH_AVAILABLE:
     class LSTMBackbone(nn.Module):  # type: ignore
         """LSTM backbone for sequence processing."""
 
-        def __init__(self, input_size: int = 21, hidden_size: int = 64):
+        def __init__(
+            self,
+            input_size: int = DEFAULT_CORN_LSTM_INPUT_SIZE,
+            hidden_size: int = DEFAULT_CORN_LSTM_HIDDEN_SIZE,
+        ):
             """Initialize LSTM backbone.
 
             Args:
@@ -98,7 +111,10 @@ if TORCH_AVAILABLE:
         """CORN (Continuous Ordinal Regression Networks) model."""
 
         def __init__(
-            self, input_size: int = 21, hidden_size: int = 64, num_classes: int = 3
+            self,
+            input_size: int = DEFAULT_CORN_LSTM_INPUT_SIZE,
+            hidden_size: int = DEFAULT_CORN_LSTM_HIDDEN_SIZE,
+            num_classes: int = DEFAULT_CORN_LSTM_NUM_CLASSES,
         ):
             """Initialize CORN model.
 
@@ -149,13 +165,13 @@ class CORNLSTMClassifier(BaseEstimator):
 
     def __init__(
         self,
-        seq_len: int = 30,
-        input_size: int = 21,
-        hidden_size: int = 64,
-        num_classes: int = 3,
-        epochs: int = 10,
-        batch_size: int = 64,
-        learning_rate: float = 0.001,
+        seq_len: int = DEFAULT_CORN_LSTM_SEQ_LEN,
+        input_size: int = DEFAULT_CORN_LSTM_INPUT_SIZE,
+        hidden_size: int = DEFAULT_CORN_LSTM_HIDDEN_SIZE,
+        num_classes: int = DEFAULT_CORN_LSTM_NUM_CLASSES,
+        epochs: int = DEFAULT_CORN_LSTM_EPOCHS,
+        batch_size: int = DEFAULT_CORN_LSTM_BATCH_SIZE,
+        learning_rate: float = DEFAULT_NEURAL_LEARNING_RATE,
         random_state: Optional[int] = None,
     ) -> None:
         """Initialize CORN LSTM classifier."""

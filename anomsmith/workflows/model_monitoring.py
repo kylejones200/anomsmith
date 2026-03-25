@@ -11,6 +11,10 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 import numpy as np
 import pandas as pd
 
+from anomsmith.constants import (
+    DEFAULT_DRIFT_DETECTION_STDDEV_THRESHOLD,
+    DEFAULT_MODEL_METRIC_DEGRADATION_THRESHOLD,
+)
 from anomsmith.objects.views import LabelView, ScoreView
 from anomsmith.workflows.eval.metrics import (
     average_run_length,
@@ -120,7 +124,7 @@ def compute_performance_metrics(
 def detect_concept_drift(
     recent_scores: Union[np.ndarray, pd.Series],
     historical_scores: Union[np.ndarray, pd.Series],
-    threshold: float = 2.0,
+    threshold: float = DEFAULT_DRIFT_DETECTION_STDDEV_THRESHOLD,
 ) -> dict[str, Any]:
     """Detect concept drift in model scores.
 
@@ -392,7 +396,9 @@ class ModelPerformanceTracker:
         return self.metrics_history.iloc[-1].to_dict()
 
     def detect_degradation(
-        self, baseline_metrics: dict[str, float], threshold: float = 0.1
+        self,
+        baseline_metrics: dict[str, float],
+        threshold: float = DEFAULT_MODEL_METRIC_DEGRADATION_THRESHOLD,
     ) -> bool:
         """Detect if performance has degraded compared to baseline.
 

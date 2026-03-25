@@ -20,6 +20,7 @@ except ImportError:
     KaplanMeierFitter = None  # type: ignore
     qth_survival_time = None  # type: ignore
 
+from anomsmith.constants import DEFAULT_CONFIDENCE_ALPHA
 from anomsmith.primitives.survival.cox import CoxSurvivalModel
 
 if TYPE_CHECKING:
@@ -44,7 +45,7 @@ class KaplanMeierModel(CoxSurvivalModel):
 
     def __init__(
         self,
-        alpha: float = 0.05,
+        alpha: float = DEFAULT_CONFIDENCE_ALPHA,
         random_state: Optional[int] = None,
     ) -> None:
         """Initialize Kaplan-Meier model."""

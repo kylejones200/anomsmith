@@ -6,6 +6,10 @@ from typing import TYPE_CHECKING, Union
 import numpy as np
 import pandas as pd
 
+from anomsmith.constants import (
+    DEFAULT_RUL_HEALTHY_THRESHOLD,
+    DEFAULT_RUL_WARNING_THRESHOLD,
+)
 from anomsmith.objects.health_state import HealthState, HealthStateView
 
 if TYPE_CHECKING:
@@ -19,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 def discretize_rul_to_health_states(
     rul: Union[np.ndarray, pd.Series, "SeriesLike"],
-    healthy_threshold: float = 30.0,
-    warning_threshold: float = 10.0,
+    healthy_threshold: float = DEFAULT_RUL_HEALTHY_THRESHOLD,
+    warning_threshold: float = DEFAULT_RUL_WARNING_THRESHOLD,
     index: pd.Index | None = None,
 ) -> HealthStateView:
     """Discretize RUL values into health states.

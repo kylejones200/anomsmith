@@ -10,7 +10,17 @@ from typing import TYPE_CHECKING, Optional, Union
 import numpy as np
 import pandas as pd
 
-from anomsmith.objects.health_state import HealthState, HealthStateView
+from anomsmith.constants import (
+    DEFAULT_ASSET_HEALTH_ANOMALY_WEIGHT,
+    DEFAULT_ASSET_HEALTH_CLASSIFICATION_WEIGHT,
+    DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD,
+    DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD,
+    DEFAULT_ISOLATION_FOREST_N_ESTIMATORS,
+    DEFAULT_OUTLIER_CONTAMINATION,
+    DEFAULT_RANDOM_FOREST_N_ESTIMATORS,
+    FUSION_WEIGHT_SUM_ABSOLUTE_TOLERANCE,
+)
+from anomsmith.objects.health_state import HealthStateView
 from anomsmith.primitives.classifiers.failure_risk import FailureRiskClassifier
 from anomsmith.primitives.detectors.ml import IsolationForestDetector
 
@@ -23,6 +33,20 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _validate_fusion_weights(classification_weight: float, anomaly_weight: float) -> None:
+    if classification_weight < 0 or anomaly_weight < 0:
+        raise ValueError(
+            "classification_weight and anomaly_weight must be non-negative, "
+            f"got {classification_weight=}, {anomaly_weight=}"
+        )
+    s = classification_weight + anomaly_weight
+    if abs(s - 1.0) > FUSION_WEIGHT_SUM_ABSOLUTE_TOLERANCE:
+        raise ValueError(
+            "classification_weight + anomaly_weight must sum to 1.0, "
+            f"got sum={s}"
+        )
+
+
 def assess_asset_health(
     sensor_data: pd.DataFrame,
     asset_ids: Optional[pd.Series] = None,
@@ -30,9 +54,15 @@ def assess_asset_health(
     failure_labels: Optional[pd.Series | np.ndarray] = None,
     use_classification: bool = True,
     use_anomaly_detection: bool = True,
-    contamination: float = 0.05,
-    n_estimators: int = 100,
+    contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
+    n_estimators: int = DEFAULT_RANDOM_FOREST_N_ESTIMATORS,
+    isolation_n_estimators: int = DEFAULT_ISOLATION_FOREST_N_ESTIMATORS,
     random_state: Optional[int] = None,
+    *,
+    risk_proba_warning_threshold: float = DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD,
+    risk_proba_distress_threshold: float = DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD,
+    classification_weight: float = DEFAULT_ASSET_HEALTH_CLASSIFICATION_WEIGHT,
+    anomaly_weight: float = DEFAULT_ASSET_HEALTH_ANOMALY_WEIGHT,
 ) -> pd.DataFrame:
     """Assess asset health using classification and anomaly detection.
 
@@ -47,9 +77,18 @@ def assess_asset_health(
         failure_labels: Optional binary labels for training classifier (1 = failure, 0 = healthy)
         use_classification: Whether to use failure risk classification (default True)
         use_anomaly_detection: Whether to use anomaly detection (default True)
-        contamination: Expected proportion of anomalies (default 0.05)
-        n_estimators: Number of trees for Random Forest (default 100)
+        contamination: Expected proportion of anomalies (see ``DEFAULT_OUTLIER_CONTAMINATION``)
+        n_estimators: Number of trees for Random Forest (see ``DEFAULT_RANDOM_FOREST_N_ESTIMATORS``)
+        isolation_n_estimators: Number of trees for Isolation Forest when anomaly detection is on
+            (see ``DEFAULT_ISOLATION_FOREST_N_ESTIMATORS``).
         random_state: Random state for reproducibility
+        risk_proba_warning_threshold: Min failure probability for **warning** health state when
+            using classification (default from ``anomsmith.constants``).
+        risk_proba_distress_threshold: Min failure probability for **distress** state (must exceed
+            warning threshold; enforced by ``FailureRiskClassifier``).
+        classification_weight: Weight on normalized classification risk in ``combined_risk`` when
+            both classification and anomaly detection run (must sum to 1 with ``anomaly_weight``).
+        anomaly_weight: Weight on normalized anomaly score in ``combined_risk``.
 
     Returns:
         DataFrame with columns:
@@ -71,6 +110,13 @@ def assess_asset_health(
         >>> result = assess_asset_health(sensor_data)
         >>> result.head()
     """
+    _validate_fusion_weights(classification_weight, anomaly_weight)
+    if risk_proba_warning_threshold >= risk_proba_distress_threshold:
+        raise ValueError(
+            "risk_proba_warning_threshold must be < risk_proba_distress_threshold, "
+            f"got {risk_proba_warning_threshold=}, {risk_proba_distress_threshold=}"
+        )
+
     if feature_cols is None:
         # Use all numeric columns
         feature_cols = sensor_data.select_dtypes(include=[np.number]).columns.tolist()
@@ -97,7 +143,10 @@ def assess_asset_health(
             failure_risks = probas[:, 0]
 
         health_state_view = classifier.predict_health_states(
-            X, index=pd.RangeIndex(len(X)), risk_threshold=0.5, distress_threshold=0.8
+            X,
+            index=pd.RangeIndex(len(X)),
+            risk_threshold=risk_proba_warning_threshold,
+            distress_threshold=risk_proba_distress_threshold,
         )
         health_states = health_state_view.states
     elif use_classification:
@@ -119,7 +168,9 @@ def assess_asset_health(
     if use_anomaly_detection:
         # Use Isolation Forest for multivariate anomaly detection
         detector = IsolationForestDetector(
-            contamination=contamination, random_state=random_state
+            contamination=contamination,
+            n_estimators=isolation_n_estimators,
+            random_state=random_state,
         )
 
         # Fit on sensor data (treating each row as a sample)
@@ -156,8 +207,10 @@ def assess_asset_health(
         else:
             norm_anomaly_score = anomaly_scores
 
-        # Combine (weighted average: 60% classification, 40% anomaly)
-        combined_risks = 0.6 * norm_failure_risk + 0.4 * norm_anomaly_score
+        combined_risks = (
+            classification_weight * norm_failure_risk
+            + anomaly_weight * norm_anomaly_score
+        )
     elif use_classification:
         # Normalize failure risk
         if failure_risks.max() > failure_risks.min():

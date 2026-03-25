@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Optional, Union
 import numpy as np
 import pandas as pd
 
+from anomsmith.constants import DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF
+
 try:
     from lifelines.utils import concordance_index as lifelines_c_index
 
@@ -33,6 +35,12 @@ if TYPE_CHECKING:
         SeriesLike = None
 
 logger = logging.getLogger(__name__)
+
+
+def _median_survival_time_from_step_function(col: pd.Series):
+    """First time t where S(t) <= p (default median survival read-off)."""
+    p = DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF
+    return col.index[col <= p][0] if (col <= p).any() else col.index[-1]
 
 
 def compute_concordance_index(
@@ -146,11 +154,7 @@ def evaluate_survival_model(
     # Compute risk scores from survival if not provided
     if risk_scores is None:
         # Use negative median survival time as risk score
-        median_survival = surv_df.apply(
-            lambda col: (
-                col.index[col <= 0.5][0] if (col <= 0.5).any() else col.index[-1]
-            )
-        )
+        median_survival = surv_df.apply(_median_survival_time_from_step_function)
         risk_scores_array = -median_survival.values
     else:
         risk_scores_array = np.asarray(risk_scores)
@@ -161,9 +165,7 @@ def evaluate_survival_model(
     )
 
     # Compute MAE (using median survival as prediction)
-    median_survival = surv_df.apply(
-        lambda col: col.index[col <= 0.5][0] if (col <= 0.5).any() else col.index[-1]
-    )
+    median_survival = surv_df.apply(_median_survival_time_from_step_function)
     mae = np.mean(np.abs(median_survival.values - durations_array))
 
     # Use pycox evaluation if available (more comprehensive)

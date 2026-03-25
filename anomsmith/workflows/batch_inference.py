@@ -10,8 +10,9 @@ from typing import TYPE_CHECKING, Iterator, Optional, Union
 import numpy as np
 import pandas as pd
 
-from anomsmith.primitives.base import BaseDetector, BaseScorer
 from anomsmith.objects.views import LabelView, ScoreView
+from anomsmith.primitives.base import BaseDetector, BaseScorer
+from anomsmith.tasks.detect import run_detection, run_scoring
 
 if TYPE_CHECKING:
     try:
@@ -20,6 +21,34 @@ if TYPE_CHECKING:
         SeriesLike = None
 
 logger = logging.getLogger(__name__)
+
+
+def _score_batch(batch_data: Union[np.ndarray, pd.Series, pd.DataFrame], scorer: BaseScorer) -> ScoreView:
+    """Score one batch via tasks when input is series-like; else delegate to scorer."""
+    if isinstance(batch_data, pd.DataFrame):
+        if batch_data.shape[1] != 1:
+            return scorer.score(batch_data)
+        batch_data = batch_data.iloc[:, 0]
+    return run_scoring(batch_data, scorer)
+
+
+def _predict_batch(
+    batch_data: Union[np.ndarray, pd.Series, pd.DataFrame], detector: BaseDetector
+) -> tuple[LabelView, ScoreView]:
+    if isinstance(batch_data, pd.DataFrame):
+        if batch_data.shape[1] != 1:
+            label_view = detector.predict(batch_data)
+            score_view = detector.score(batch_data)
+            return label_view, score_view
+        batch_data = batch_data.iloc[:, 0]
+    return run_detection(batch_data, detector)
+
+
+def _series_from_s3_csv_body(body) -> pd.Series:
+    """Parse S3 object body as CSV and return the first column as a Series."""
+    df = pd.read_csv(body)
+    y = df.iloc[:, 0]
+    return y if isinstance(y, pd.Series) else pd.Series(y)
 
 
 def batch_score(
@@ -51,7 +80,7 @@ def batch_score(
         raise ValueError("Scorer must be fitted before batch scoring.")
 
     for batch_idx, batch_data in enumerate(data_iterator):
-        score_view = scorer.score(batch_data)
+        score_view = _score_batch(batch_data, scorer)
         logger.debug(f"Scored batch {batch_idx}: {len(score_view.scores)} samples")
         yield score_view
 
@@ -79,8 +108,7 @@ def batch_predict(
         raise ValueError("Detector must be fitted before batch prediction.")
 
     for batch_idx, batch_data in enumerate(data_iterator):
-        label_view = detector.predict(batch_data)
-        score_view = detector.score(batch_data)
+        label_view, score_view = _predict_batch(batch_data, detector)
         logger.debug(f"Predicted batch {batch_idx}: {len(label_view.labels)} samples")
         yield (label_view, score_view)
 
@@ -133,23 +161,17 @@ def process_s3_batch(
 
     for s3_key in s3_keys:
         try:
-            # Download data from S3
             obj = s3_client.get_object(Bucket=bucket, Key=s3_key)
-            df = pd.read_csv(obj["Body"])
+            y = _series_from_s3_csv_body(obj["Body"])
 
-            # Assume first column is time series values
-            y = df.iloc[:, 0]
-
-            # Score or predict
             if isinstance(model, BaseScorer):
-                score_view = model.score(y)
+                score_view = run_scoring(y, model)
                 result_df = pd.DataFrame(
                     {"score": score_view.scores, "s3_key": s3_key},
                     index=score_view.index,
                 )
             else:
-                label_view = model.predict(y)
-                score_view = model.score(y)
+                label_view, score_view = run_detection(y, model)
                 result_df = pd.DataFrame(
                     {
                         "label": label_view.labels,

@@ -6,6 +6,13 @@ from typing import TYPE_CHECKING, Optional, Union
 import numpy as np
 import pandas as pd
 
+from anomsmith.constants import (
+    DEFAULT_UNIT_SCALE_FOR_ZERO_SPREAD,
+    IQR_BINARY_INLIER_SCORE,
+    IQR_BINARY_OUTLIER_SCORE,
+    NUMERICAL_EPSILON,
+    TUKEY_FENCE_IQR_MULTIPLIER,
+)
 from anomsmith.objects.views import ScoreView
 from anomsmith.primitives.base import BaseScorer
 
@@ -112,7 +119,11 @@ class IQRScorer(BaseScorer):
         random_state: Random state for reproducibility (not used, kept for compatibility)
     """
 
-    def __init__(self, factor: float = 1.5, random_state: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        factor: float = TUKEY_FENCE_IQR_MULTIPLIER,
+        random_state: Optional[int] = None,
+    ) -> None:
         self.factor = factor
         self.random_state = random_state
         self.q1_: np.ndarray | None = None
@@ -148,7 +159,9 @@ class IQRScorer(BaseScorer):
         self.q3_ = np.percentile(values, 75, axis=0)
         self.iqr_ = self.q3_ - self.q1_
         # Avoid division by zero
-        self.iqr_ = np.where(self.iqr_ == 0, 1.0, self.iqr_)
+        self.iqr_ = np.where(
+            self.iqr_ == 0, DEFAULT_UNIT_SCALE_FOR_ZERO_SPREAD, self.iqr_
+        )
 
         self._fitted = True
         logger.debug(f"Fitted IQRScorer: q1={self.q1_}, q3={self.q3_}")
@@ -200,10 +213,12 @@ class IQRScorer(BaseScorer):
             normal_scores = -np.minimum(max_dist_lower, max_dist_upper)
 
             # Normalize by max IQR
-            scale = self.iqr_.max() + 1e-10
+            scale = self.iqr_.max() + NUMERICAL_EPSILON
             scores = np.where(is_outlier, outlier_scores / scale, normal_scores / scale)
         else:
             # 1D case: simple binary scoring (vectorized)
-            scores = np.where(outlier_mask, 1.0, 0.0).astype(float)
+            scores = np.where(
+                outlier_mask, IQR_BINARY_OUTLIER_SCORE, IQR_BINARY_INLIER_SCORE
+            ).astype(float)
 
         return ScoreView(index=index, scores=scores)

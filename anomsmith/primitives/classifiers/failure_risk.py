@@ -12,6 +12,10 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 
+from anomsmith.constants import (
+    DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD,
+    DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD,
+)
 from anomsmith.objects.health_state import HealthState, HealthStateView
 
 if TYPE_CHECKING:
@@ -92,8 +96,8 @@ class FailureRiskClassifier:
         self,
         X: Union[np.ndarray, pd.DataFrame],
         index: pd.Index | None = None,
-        risk_threshold: float = 0.5,
-        distress_threshold: float = 0.8,
+        risk_threshold: float = DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD,
+        distress_threshold: float = DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD,
     ) -> HealthStateView:
         """Predict health states from features.
 

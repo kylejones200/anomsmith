@@ -10,6 +10,11 @@ from typing import TYPE_CHECKING, Optional, Union
 import numpy as np
 import pandas as pd
 
+from anomsmith.constants import (
+    DEFAULT_RUL_HEALTHY_THRESHOLD,
+    DEFAULT_RUL_WARNING_THRESHOLD,
+    DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF,
+)
 from anomsmith.objects.health_state import HealthState, HealthStateView
 from anomsmith.primitives.survival.cox import CoxSurvivalModel
 from anomsmith.workflows.eval.survival_metrics import (
@@ -30,7 +35,8 @@ logger = logging.getLogger(__name__)
 def predict_rul_from_survival(
     model: CoxSurvivalModel,
     X: Union[np.ndarray, pd.DataFrame],
-    threshold: float = 0.5,
+    threshold: float = DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF,
+    index: Optional[pd.Index] = None,
 ) -> pd.Series:
     """Predict Remaining Useful Life (RUL) from survival model.
 
@@ -41,6 +47,8 @@ def predict_rul_from_survival(
         model: Fitted survival model
         X: Feature matrix (n_samples, n_features)
         threshold: Survival probability threshold for median (default 0.5)
+        index: Optional row index for the returned Series (defaults to ``X.index``
+            for DataFrame inputs, else a :class:`pandas.RangeIndex`)
 
     Returns:
         Series of predicted RUL values
@@ -53,15 +61,20 @@ def predict_rul_from_survival(
     """
     logger.info(f"Predicting RUL from survival model (threshold={threshold})")
     rul_array = model.predict_time_to_failure(X, threshold=threshold)
-    return pd.Series(rul_array, name="rul")
+    if index is None:
+        if isinstance(X, pd.DataFrame):
+            index = X.index
+        else:
+            index = pd.RangeIndex(start=0, stop=len(rul_array))
+    return pd.Series(rul_array, index=index, name="rul")
 
 
 def predict_health_states_from_survival(
     model: CoxSurvivalModel,
     X: Union[np.ndarray, pd.DataFrame],
-    healthy_threshold: float = 30.0,
-    warning_threshold: float = 10.0,
-    threshold: float = 0.5,
+    healthy_threshold: float = DEFAULT_RUL_HEALTHY_THRESHOLD,
+    warning_threshold: float = DEFAULT_RUL_WARNING_THRESHOLD,
+    threshold: float = DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF,
 ) -> HealthStateView:
     """Predict health states from survival model.
 
@@ -84,14 +97,8 @@ def predict_health_states_from_survival(
         ...     model, X_test, healthy_threshold=30, warning_threshold=10
         ... )
     """
-    # Determine index for RUL series
-    if isinstance(X, pd.DataFrame):
-        index = X.index
-    else:
-        index = pd.RangeIndex(start=0, stop=len(X))
-
-    # Predict RUL
-    rul_series = predict_rul_from_survival(model, X, threshold=threshold, index=index)
+    # Predict RUL (index aligned to X when X is a DataFrame)
+    rul_series = predict_rul_from_survival(model, X, threshold=threshold)
 
     # Discretize to health states using the primitive directly
     from anomsmith.primitives.health_state.discretize import (

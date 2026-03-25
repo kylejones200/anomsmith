@@ -9,6 +9,14 @@ from typing import TYPE_CHECKING, Optional, Union
 import numpy as np
 import pandas as pd
 
+from anomsmith.constants import (
+    DEFAULT_POLICY_BASE_RISKS,
+    DEFAULT_POLICY_INTERVENE_COST,
+    DEFAULT_POLICY_INTERVENE_RISK_REDUCTION,
+    DEFAULT_POLICY_REVIEW_COST,
+    DEFAULT_POLICY_REVIEW_RISK_REDUCTION,
+    DEFAULT_POLICY_WAIT_COST,
+)
 from anomsmith.objects.health_state import (
     Action,
     ActionView,
@@ -46,12 +54,12 @@ class SimpleHealthPolicy:
 
     def __init__(
         self,
-        intervene_cost: float = 100.0,
-        review_cost: float = 30.0,
-        wait_cost: float = 0.0,
-        base_risks: tuple[float, float, float] = (0.01, 0.1, 0.3),
-        intervene_risk_reduction: float = 0.5,
-        review_risk_reduction: float = 0.75,
+        intervene_cost: float = DEFAULT_POLICY_INTERVENE_COST,
+        review_cost: float = DEFAULT_POLICY_REVIEW_COST,
+        wait_cost: float = DEFAULT_POLICY_WAIT_COST,
+        base_risks: tuple[float, float, float] = DEFAULT_POLICY_BASE_RISKS,
+        intervene_risk_reduction: float = DEFAULT_POLICY_INTERVENE_RISK_REDUCTION,
+        review_risk_reduction: float = DEFAULT_POLICY_REVIEW_RISK_REDUCTION,
     ) -> None:
         """Initialize SimpleHealthPolicy."""
         self.intervene_cost = intervene_cost

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Union
 import numpy as np
 import pandas as pd
 
+from anomsmith.constants import DEFAULT_DETECTION_REPORT_TOP_ANOMALIES
 from anomsmith.primitives.base import BaseDetector, BaseScorer
 from anomsmith.primitives.thresholding import ThresholdRule, apply_threshold
 from anomsmith.tasks.detect import run_detection, run_scoring
@@ -115,26 +116,19 @@ def sweep_thresholds(
             compute_recall,
         )
 
-        # Vectorized: apply all thresholds at once using broadcasting
-        # Shape: (n_thresholds, n_samples)
-        # For each threshold, create binary predictions
-        predictions = (scores[:, np.newaxis] >= thresholds[np.newaxis, :]).astype(int)
-
-        # Compute metrics for all thresholds at once
-        # True positives: predictions AND aligned_labels (both 1)
-        # Shape: (n_samples, n_thresholds)
-        tp = ((aligned_labels[:, np.newaxis] == 1) & (predictions == 1)).sum(axis=0)
-        # Predicted positives: sum of predictions per threshold
-        pred_pos = predictions.sum(axis=0)
-        # Actual positives: sum of true labels
-        actual_pos = aligned_labels.sum()
-
-        # Vectorized precision, recall, f1 for all thresholds
-        precision = np.where(pred_pos > 0, tp / pred_pos, 0.0)
-        recall = np.where(actual_pos > 0, tp / actual_pos, 0.0)
-        f1 = np.where(
-            precision + recall > 0, 2 * (precision * recall) / (precision + recall), 0.0
-        )
+        precision_list: list[float] = []
+        recall_list: list[float] = []
+        f1_list: list[float] = []
+        for t in thresholds:
+            y_pred = (scores >= t).astype(int)
+            precision_list.append(
+                float(compute_precision(aligned_labels, y_pred))
+            )
+            recall_list.append(float(compute_recall(aligned_labels, y_pred)))
+            f1_list.append(float(compute_f1(aligned_labels, y_pred)))
+        precision = np.asarray(precision_list)
+        recall = np.asarray(recall_list)
+        f1 = np.asarray(f1_list)
     else:
         precision = np.full(len(thresholds), np.nan)
         recall = np.full(len(thresholds), np.nan)
@@ -175,7 +169,9 @@ def report_detection(
 
     # Top anomalies by score
     top_anomalies = (
-        result_df[result_df["flag"] == 1].nlargest(10, "score").index.tolist()
+        result_df[result_df["flag"] == 1]
+        .nlargest(DEFAULT_DETECTION_REPORT_TOP_ANOMALIES, "score")
+        .index.tolist()
     )
 
     report = {

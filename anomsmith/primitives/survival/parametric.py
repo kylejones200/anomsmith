@@ -32,6 +32,7 @@ except ImportError:
     GeneralizedGammaFitter = None  # type: ignore
     SplineFitter = None  # type: ignore
 
+from anomsmith.constants import DEFAULT_CONFIDENCE_ALPHA
 from anomsmith.primitives.survival.cox import CoxSurvivalModel
 
 if TYPE_CHECKING:
@@ -86,7 +87,7 @@ class ParametricSurvivalModel(CoxSurvivalModel):
         breakpoints: Optional[
             list[float]
         ] = None,  # For piecewise_exponential and spline
-        alpha: float = 0.05,  # For confidence intervals
+        alpha: float = DEFAULT_CONFIDENCE_ALPHA,
         random_state: Optional[int] = None,
         **kwargs,
     ) -> None:

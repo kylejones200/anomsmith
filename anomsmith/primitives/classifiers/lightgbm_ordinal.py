@@ -18,6 +18,10 @@ except ImportError:
     LIGHTGBM_AVAILABLE = False
     lgb = None  # type: ignore
 
+from anomsmith.constants import (
+    DEFAULT_LIGHTGBM_LEARNING_RATE,
+    DEFAULT_LIGHTGBM_N_ESTIMATORS,
+)
 from anomsmith.objects.health_state import HealthState, HealthStateView
 from anomsmith.primitives.base import BaseEstimator
 
@@ -47,8 +51,8 @@ class LightGBMOrdinalClassifier(BaseEstimator):
 
     def __init__(
         self,
-        n_estimators: int = 100,
-        learning_rate: float = 0.1,
+        n_estimators: int = DEFAULT_LIGHTGBM_N_ESTIMATORS,
+        learning_rate: float = DEFAULT_LIGHTGBM_LEARNING_RATE,
         max_depth: int = -1,
         random_state: Optional[int] = None,
         verbosity: int = -1,

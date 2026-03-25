@@ -18,6 +18,7 @@ except ImportError:
     MORD_AVAILABLE = False
     mord = None  # type: ignore
 
+from anomsmith.constants import DEFAULT_ORDINAL_REGULARIZATION_ALPHA
 from anomsmith.objects.health_state import HealthState, HealthStateView
 from anomsmith.primitives.base import BaseEstimator
 
@@ -43,7 +44,7 @@ class OrdinalLogisticClassifier(BaseEstimator):
 
     def __init__(
         self,
-        alpha: float = 0.0,
+        alpha: float = DEFAULT_ORDINAL_REGULARIZATION_ALPHA,
         random_state: Optional[int] = None,
     ) -> None:
         """Initialize ordinal logistic classifier."""

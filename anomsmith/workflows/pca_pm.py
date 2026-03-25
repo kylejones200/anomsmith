@@ -10,6 +10,10 @@ from typing import TYPE_CHECKING, Optional, Union
 import numpy as np
 import pandas as pd
 
+from anomsmith.constants import (
+    DEFAULT_PCA_HEALTHY_DISTANCE_PERCENTILE,
+    DEFAULT_PCA_WARNING_DISTANCE_PERCENTILE,
+)
 from anomsmith.objects.health_state import HealthState, HealthStateView
 from anomsmith.primitives.detectors.pca import PCADetector
 
@@ -33,6 +37,9 @@ def track_mahalanobis_distance(
     for each time point. This provides a single metric that can be tracked
     as a time series to monitor equipment health drift.
 
+    Delegates scoring to :meth:`PCADetector.score` so Mahalanobis math stays
+    in the primitive layer (single implementation).
+
     Args:
         X: Feature matrix (n_samples, n_features) with sensor readings
         detector: Fitted PCADetector (fitted detector with PCA and mean/covariance computed)
@@ -51,50 +58,27 @@ def track_mahalanobis_distance(
         raise ValueError(
             "PCADetector must be fitted before tracking Mahalanobis distance."
         )
-
-    # Score using Mahalanobis distance
-    if isinstance(X, pd.DataFrame):
-        index = X.index
-        X_data = X.values
-    else:
-        X_data = np.asarray(X)
-        if index is None:
-            index = pd.RangeIndex(start=0, stop=len(X_data))
-
-    # Get Mahalanobis distance scores directly
-    # Transform data to PCA space and compute Mahalanobis distance manually
-    X_scaled = detector.scaler_.transform(X_data)  # type: ignore
-    X_pca = detector.pca_.transform(X_scaled)  # type: ignore
-
-    # Compute Mahalanobis distance in PC space
-    if detector.mean_ is None or detector.cov_ is None:
+    if detector.score_method != "mahalanobis":
         raise ValueError(
-            "PCADetector must be fitted with mean_ and cov_ computed. "
-            "Ensure detector was fitted properly with mahalanobis support."
+            "track_mahalanobis_distance requires PCADetector(score_method='mahalanobis'). "
+            f"Got score_method={detector.score_method!r}."
         )
 
-    # Vectorized Mahalanobis distance calculation
-    # Mahalanobis distance: sqrt((x - mu)^T * Sigma^-1 * (x - mu))
-    diff = X_pca - detector.mean_  # Shape: (n_samples, n_components)
+    if isinstance(X, pd.DataFrame):
+        out_index = X.index
+        X_arr = X.values
+    else:
+        X_arr = np.asarray(X)
+        out_index = index if index is not None else pd.RangeIndex(start=0, stop=len(X_arr))
 
-    try:
-        inv_cov = np.linalg.inv(detector.cov_)
-    except np.linalg.LinAlgError:
-        # If covariance is singular, use pseudo-inverse
-        inv_cov = np.linalg.pinv(detector.cov_)
-
-    # Vectorized: compute quadratic form for all samples
-    # For each sample: diff[i] @ inv_cov @ diff[i].T (scalar)
-    # Efficient: compute diff @ inv_cov, then element-wise multiply with diff and sum
-    quad_form = (diff @ inv_cov) * diff  # Shape: (n_samples, n_components)
-    quad_form = np.sum(quad_form, axis=1)  # Shape: (n_samples,)
-    distances = np.sqrt(quad_form)
+    score_view = detector.score(X_arr)
+    distances = score_view.scores
 
     logger.debug(
         f"Computed Mahalanobis distances: mean={np.mean(distances):.3f}, "
         f"max={np.max(distances):.3f}, min={np.min(distances):.3f}"
     )
-    return pd.Series(distances, index=index, name="mahalanobis_distance")
+    return pd.Series(distances, index=out_index, name="mahalanobis_distance")
 
 
 def classify_health_from_distance(
@@ -227,8 +211,8 @@ def assess_health_with_pca(
 def compute_pca_health_thresholds(
     X_train: Union[np.ndarray, pd.DataFrame],
     detector: PCADetector,
-    healthy_percentile: float = 75.0,
-    warning_percentile: float = 95.0,
+    healthy_percentile: float = DEFAULT_PCA_HEALTHY_DISTANCE_PERCENTILE,
+    warning_percentile: float = DEFAULT_PCA_WARNING_DISTANCE_PERCENTILE,
 ) -> tuple[float, float]:
     """Compute health state thresholds from training data.
 

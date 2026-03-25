@@ -14,6 +14,11 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
+from anomsmith.constants import (
+    DEFAULT_OUTLIER_CONTAMINATION,
+    DEFAULT_PCA_VARIANCE_FRACTION,
+    NUMERICAL_EPSILON,
+)
 from anomsmith.objects.views import LabelView, ScoreView
 from anomsmith.primitives.base import BaseDetector
 
@@ -48,11 +53,11 @@ class PCADetector(BaseDetector):
 
     def __init__(
         self,
-        n_components: Union[float, int] = 0.95,
+        n_components: Union[float, int] = DEFAULT_PCA_VARIANCE_FRACTION,
         score_method: Literal[
             "reconstruction", "mahalanobis", "both"
         ] = "reconstruction",
-        contamination: float = 0.05,
+        contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
         random_state: Optional[int] = None,
     ) -> None:
         self.n_components = n_components
@@ -233,7 +238,7 @@ class PCADetector(BaseDetector):
                 and self.recon_max_ is not None
             ):
                 recon_norm = (recon_scores - self.recon_min_) / (
-                    self.recon_max_ - self.recon_min_ + 1e-10
+                    self.recon_max_ - self.recon_min_ + NUMERICAL_EPSILON
                 )
             else:
                 # Fallback: use current scores (acceptable for single-batch scoring, but warn)
@@ -243,7 +248,7 @@ class PCADetector(BaseDetector):
                     "Re-fit the model to store normalization parameters."
                 )
                 recon_norm = (recon_scores - recon_scores.min()) / (
-                    recon_scores.max() - recon_scores.min() + 1e-10
+                    recon_scores.max() - recon_scores.min() + NUMERICAL_EPSILON
                 )
 
             if (
@@ -253,7 +258,7 @@ class PCADetector(BaseDetector):
                 and self.maha_max_ is not None
             ):
                 maha_norm = (maha_scores - self.maha_min_) / (
-                    self.maha_max_ - self.maha_min_ + 1e-10
+                    self.maha_max_ - self.maha_min_ + NUMERICAL_EPSILON
                 )
             else:
                 # Fallback: use current scores (acceptable for single-batch scoring, but warn)
@@ -263,7 +268,7 @@ class PCADetector(BaseDetector):
                     "Re-fit the model to store normalization parameters."
                 )
                 maha_norm = (maha_scores - maha_scores.min()) / (
-                    maha_scores.max() - maha_scores.min() + 1e-10
+                    maha_scores.max() - maha_scores.min() + NUMERICAL_EPSILON
                 )
 
             return (recon_norm + maha_norm) / 2

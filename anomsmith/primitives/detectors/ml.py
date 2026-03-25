@@ -14,6 +14,12 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import StandardScaler
 
+from anomsmith.constants import (
+    DEFAULT_ELLIPTIC_ENVELOPE_SUPPORT_FRACTION,
+    DEFAULT_ISOLATION_FOREST_N_ESTIMATORS,
+    DEFAULT_LOF_N_NEIGHBORS,
+    DEFAULT_OUTLIER_CONTAMINATION,
+)
 from anomsmith.objects.views import LabelView, ScoreView
 from anomsmith.primitives.base import BaseDetector
 from anomsmith.primitives.detectors._utils import (
@@ -39,8 +45,8 @@ class IsolationForestDetector(BaseDetector):
 
     def __init__(
         self,
-        contamination: float = 0.05,
-        n_estimators: int = 200,
+        contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
+        n_estimators: int = DEFAULT_ISOLATION_FOREST_N_ESTIMATORS,
         random_state: Optional[int] = None,
         n_jobs: int = -1,
     ) -> None:
@@ -145,8 +151,8 @@ class LOFDetector(BaseDetector):
 
     def __init__(
         self,
-        contamination: float = 0.05,
-        n_neighbors: int = 20,
+        contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
+        n_neighbors: int = DEFAULT_LOF_N_NEIGHBORS,
         random_state: Optional[int] = None,
         n_jobs: int = -1,
     ) -> None:
@@ -257,8 +263,8 @@ class RobustCovarianceDetector(BaseDetector):
 
     def __init__(
         self,
-        contamination: float = 0.05,
-        support_fraction: float = 0.8,
+        contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
+        support_fraction: float = DEFAULT_ELLIPTIC_ENVELOPE_SUPPORT_FRACTION,
         random_state: Optional[int] = None,
     ) -> None:
         self.contamination = contamination

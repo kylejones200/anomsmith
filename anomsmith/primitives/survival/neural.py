@@ -25,6 +25,14 @@ except ImportError:
     LogisticHazard = None  # type: ignore
     LabTransDiscreteTime = None  # type: ignore
 
+from anomsmith.constants import (
+    DEFAULT_NEURAL_SURVIVAL_BATCH_SIZE,
+    DEFAULT_NEURAL_SURVIVAL_EPOCHS,
+    DEFAULT_NEURAL_SURVIVAL_HIDDEN_LAYERS,
+    DEFAULT_NEURAL_SURVIVAL_N_BINS,
+    DEFAULT_SURVIVAL_CURVE_EXTRAPOLATION_FILL,
+    DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF,
+)
 from anomsmith.primitives.survival.cox import CoxSurvivalModel
 
 if TYPE_CHECKING:
@@ -52,10 +60,10 @@ class LogisticHazardModel(CoxSurvivalModel):
 
     def __init__(
         self,
-        n_bins: int = 50,
+        n_bins: int = DEFAULT_NEURAL_SURVIVAL_N_BINS,
         num_nodes: list[int] = None,
-        batch_size: int = 128,
-        epochs: int = 50,
+        batch_size: int = DEFAULT_NEURAL_SURVIVAL_BATCH_SIZE,
+        epochs: int = DEFAULT_NEURAL_SURVIVAL_EPOCHS,
         random_state: Optional[int] = None,
     ) -> None:
         """Initialize LogisticHazard model."""
@@ -67,7 +75,7 @@ class LogisticHazardModel(CoxSurvivalModel):
 
         super().__init__(random_state=random_state)
         self.n_bins = n_bins
-        self.num_nodes = num_nodes or [32, 32]
+        self.num_nodes = num_nodes or list(DEFAULT_NEURAL_SURVIVAL_HIDDEN_LAYERS)
         self.batch_size = batch_size
         self.epochs = epochs
         self.model_: Optional[LogisticHazard] = None  # type: ignore
@@ -169,7 +177,9 @@ class LogisticHazardModel(CoxSurvivalModel):
             # Interpolate to requested time points
             # Use reindex with nearest method, forward fill for extrapolation
             surv_interp = surv_df.reindex(time_points, method="nearest")
-            surv_interp = surv_interp.ffill().bfill().fillna(1.0)
+            surv_interp = surv_interp.ffill().bfill().fillna(
+                DEFAULT_SURVIVAL_CURVE_EXTRAPOLATION_FILL
+            )
             return surv_interp
 
         return surv_df
@@ -192,9 +202,10 @@ class LogisticHazardModel(CoxSurvivalModel):
 
         # Use negative median survival time as risk score
         surv_df = self.predict_survival_function(X_data)
+        _p = DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF
         median_survival = surv_df.apply(
-            lambda col: (
-                col.index[col <= 0.5][0] if (col <= 0.5).any() else col.index[-1]
+            lambda col, p=_p: (
+                col.index[col <= p][0] if (col <= p).any() else col.index[-1]
             )
         )
         # Higher median survival = lower risk
@@ -219,8 +230,8 @@ class DeepSurvModel(CoxSurvivalModel):
     def __init__(
         self,
         num_nodes: list[int] = None,
-        batch_size: int = 128,
-        epochs: int = 50,
+        batch_size: int = DEFAULT_NEURAL_SURVIVAL_BATCH_SIZE,
+        epochs: int = DEFAULT_NEURAL_SURVIVAL_EPOCHS,
         random_state: Optional[int] = None,
     ) -> None:
         """Initialize DeepSurv model."""
@@ -230,7 +241,7 @@ class DeepSurvModel(CoxSurvivalModel):
             )
 
         super().__init__(random_state=random_state)
-        self.num_nodes = num_nodes or [32, 32]
+        self.num_nodes = num_nodes or list(DEFAULT_NEURAL_SURVIVAL_HIDDEN_LAYERS)
         self.batch_size = batch_size
         self.epochs = epochs
         self.model_: Optional[CoxPH] = None  # type: ignore
@@ -325,7 +336,9 @@ class DeepSurvModel(CoxSurvivalModel):
             # Interpolate to requested time points
             # Use reindex with nearest method, forward fill for extrapolation
             surv_interp = surv_df.reindex(time_points, method="nearest")
-            surv_interp = surv_interp.ffill().bfill().fillna(1.0)
+            surv_interp = surv_interp.ffill().bfill().fillna(
+                DEFAULT_SURVIVAL_CURVE_EXTRAPOLATION_FILL
+            )
             return surv_interp
 
         return surv_df

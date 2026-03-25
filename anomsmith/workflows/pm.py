@@ -9,7 +9,17 @@ from typing import TYPE_CHECKING, Optional, Union
 import numpy as np
 import pandas as pd
 
-from anomsmith.objects.health_state import HealthStateView, PolicyResult
+from anomsmith.constants import (
+    DEFAULT_POLICY_BASE_RISKS,
+    DEFAULT_POLICY_INTERVENE_COST,
+    DEFAULT_POLICY_INTERVENE_RISK_REDUCTION,
+    DEFAULT_POLICY_REVIEW_COST,
+    DEFAULT_POLICY_REVIEW_RISK_REDUCTION,
+    DEFAULT_POLICY_WAIT_COST,
+    DEFAULT_RUL_HEALTHY_THRESHOLD,
+    DEFAULT_RUL_WARNING_THRESHOLD,
+)
+from anomsmith.objects.health_state import HealthStateView
 from anomsmith.primitives.health_state.discretize import discretize_rul_to_health_states
 from anomsmith.primitives.policy.simple import SimpleHealthPolicy
 
@@ -22,10 +32,23 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _coerce_health_state_view(
+    health_states: Union[pd.Series, np.ndarray, HealthStateView],
+) -> HealthStateView:
+    if isinstance(health_states, HealthStateView):
+        return health_states
+    if isinstance(health_states, pd.Series):
+        return HealthStateView(
+            index=health_states.index, states=health_states.values
+        )
+    index = pd.RangeIndex(start=0, stop=len(health_states))
+    return HealthStateView(index=index, states=np.asarray(health_states))
+
+
 def discretize_rul(
     rul: Union[pd.Series, np.ndarray, "SeriesLike"],
-    healthy_threshold: float = 30.0,
-    warning_threshold: float = 10.0,
+    healthy_threshold: float = DEFAULT_RUL_HEALTHY_THRESHOLD,
+    warning_threshold: float = DEFAULT_RUL_WARNING_THRESHOLD,
 ) -> pd.Series:
     """Discretize RUL values into health states.
 
@@ -59,12 +82,12 @@ def discretize_rul(
 def apply_policy(
     health_states: Union[pd.Series, np.ndarray, HealthStateView],
     previous_states: Optional[Union[pd.Series, np.ndarray, HealthStateView]] = None,
-    intervene_cost: float = 100.0,
-    review_cost: float = 30.0,
-    wait_cost: float = 0.0,
-    base_risks: tuple[float, float, float] = (0.01, 0.1, 0.3),
-    intervene_risk_reduction: float = 0.5,
-    review_risk_reduction: float = 0.75,
+    intervene_cost: float = DEFAULT_POLICY_INTERVENE_COST,
+    review_cost: float = DEFAULT_POLICY_REVIEW_COST,
+    wait_cost: float = DEFAULT_POLICY_WAIT_COST,
+    base_risks: tuple[float, float, float] = DEFAULT_POLICY_BASE_RISKS,
+    intervene_risk_reduction: float = DEFAULT_POLICY_INTERVENE_RISK_REDUCTION,
+    review_risk_reduction: float = DEFAULT_POLICY_REVIEW_RISK_REDUCTION,
 ) -> pd.DataFrame:
     """Apply decision policy to health states.
 
@@ -88,33 +111,11 @@ def apply_policy(
         >>> result['action'].values
         array([0, 0, 1, 2, 2])
     """
-    # Convert to HealthStateView if needed
-    if isinstance(health_states, HealthStateView):
-        health_state_view = health_states
-    elif isinstance(health_states, pd.Series):
-        health_state_view = HealthStateView(
-            index=health_states.index, states=health_states.values
-        )
-    else:
-        index = pd.RangeIndex(start=0, stop=len(health_states))
-        health_state_view = HealthStateView(
-            index=index, states=np.asarray(health_states)
-        )
+    health_state_view = _coerce_health_state_view(health_states)
 
-    # Convert previous states if provided
     previous_state_view: Optional[HealthStateView] = None
     if previous_states is not None:
-        if isinstance(previous_states, HealthStateView):
-            previous_state_view = previous_states
-        elif isinstance(previous_states, pd.Series):
-            previous_state_view = HealthStateView(
-                index=previous_states.index, states=previous_states.values
-            )
-        else:
-            index = pd.RangeIndex(start=0, stop=len(previous_states))
-            previous_state_view = HealthStateView(
-                index=index, states=np.asarray(previous_states)
-            )
+        previous_state_view = _coerce_health_state_view(previous_states)
 
     # Apply policy
     policy = SimpleHealthPolicy(
@@ -133,12 +134,12 @@ def apply_policy(
 def evaluate_policy(
     health_states: Union[pd.Series, np.ndarray, HealthStateView],
     previous_states: Optional[Union[pd.Series, np.ndarray, HealthStateView]] = None,
-    intervene_cost: float = 100.0,
-    review_cost: float = 30.0,
-    wait_cost: float = 0.0,
-    base_risks: tuple[float, float, float] = (0.01, 0.1, 0.3),
-    intervene_risk_reduction: float = 0.5,
-    review_risk_reduction: float = 0.75,
+    intervene_cost: float = DEFAULT_POLICY_INTERVENE_COST,
+    review_cost: float = DEFAULT_POLICY_REVIEW_COST,
+    wait_cost: float = DEFAULT_POLICY_WAIT_COST,
+    base_risks: tuple[float, float, float] = DEFAULT_POLICY_BASE_RISKS,
+    intervene_risk_reduction: float = DEFAULT_POLICY_INTERVENE_RISK_REDUCTION,
+    review_risk_reduction: float = DEFAULT_POLICY_REVIEW_RISK_REDUCTION,
 ) -> dict[str, float]:
     """Evaluate policy performance metrics.
 
@@ -162,33 +163,11 @@ def evaluate_policy(
         >>> metrics['total_cost']
         230.0
     """
-    # Convert to HealthStateView if needed
-    if isinstance(health_states, HealthStateView):
-        health_state_view = health_states
-    elif isinstance(health_states, pd.Series):
-        health_state_view = HealthStateView(
-            index=health_states.index, states=health_states.values
-        )
-    else:
-        index = pd.RangeIndex(start=0, stop=len(health_states))
-        health_state_view = HealthStateView(
-            index=index, states=np.asarray(health_states)
-        )
+    health_state_view = _coerce_health_state_view(health_states)
 
-    # Convert previous states if provided
     previous_state_view: Optional[HealthStateView] = None
     if previous_states is not None:
-        if isinstance(previous_states, HealthStateView):
-            previous_state_view = previous_states
-        elif isinstance(previous_states, pd.Series):
-            previous_state_view = HealthStateView(
-                index=previous_states.index, states=previous_states.values
-            )
-        else:
-            index = pd.RangeIndex(start=0, stop=len(previous_states))
-            previous_state_view = HealthStateView(
-                index=index, states=np.asarray(previous_states)
-            )
+        previous_state_view = _coerce_health_state_view(previous_states)
 
     # Evaluate policy
     policy = SimpleHealthPolicy(

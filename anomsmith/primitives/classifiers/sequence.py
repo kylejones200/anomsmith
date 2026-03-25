@@ -11,6 +11,10 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 
+from anomsmith.constants import (
+    DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD,
+    DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD,
+)
 from anomsmith.objects.health_state import HealthState, HealthStateView
 
 if TYPE_CHECKING:
@@ -118,18 +122,17 @@ class SequenceDistressClassifier:
         X_scaled = self.scaler_.transform(X_flat)
         # Predict probabilities
         probas = self.classifier_.predict_proba(X_scaled)
-        # Convert to health states: if probability of distress > 0.5, flag as Warning (1)
-        # We'll use 0.5 threshold for Warning, 0.8 for Distress
+        warn_t = DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD
+        distress_t = DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD
         states = np.zeros(len(probas), dtype=int)
         if probas.shape[1] > 1:
             distress_proba = probas[:, 1]  # Probability of distress class
-            states[distress_proba > 0.8] = HealthState.DISTRESS
-            states[(distress_proba > 0.5) & (distress_proba <= 0.8)] = (
+            states[distress_proba > distress_t] = HealthState.DISTRESS
+            states[(distress_proba > warn_t) & (distress_proba <= distress_t)] = (
                 HealthState.WARNING
             )
         else:
-            # Binary case
-            states[probas[:, 0] > 0.5] = HealthState.WARNING
+            states[probas[:, 0] > warn_t] = HealthState.WARNING
 
         if index is None:
             index = pd.RangeIndex(start=0, stop=len(states))

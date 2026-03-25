@@ -20,6 +20,10 @@ except ImportError:
     CoxPHFitter = None  # type: ignore
     lifelines_c_index = None  # type: ignore
 
+from anomsmith.constants import (
+    DEFAULT_LIFELINES_L1_RATIO,
+    DEFAULT_LIFELINES_PENALIZER,
+)
 from anomsmith.primitives.survival.cox import CoxSurvivalModel
 
 if TYPE_CHECKING:
@@ -45,8 +49,8 @@ class LifelinesCoxModel(CoxSurvivalModel):
 
     def __init__(
         self,
-        penalizer: float = 0.0,
-        l1_ratio: float = 0.0,
+        penalizer: float = DEFAULT_LIFELINES_PENALIZER,
+        l1_ratio: float = DEFAULT_LIFELINES_L1_RATIO,
         random_state: Optional[int] = None,
     ) -> None:
         """Initialize Lifelines Cox model."""

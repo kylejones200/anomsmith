@@ -6,6 +6,11 @@ from typing import TYPE_CHECKING, Union
 import numpy as np
 import pandas as pd
 
+from anomsmith.constants import (
+    DEFAULT_CHANGE_POINT_THRESHOLD_MULTIPLIER,
+    DEFAULT_CHANGE_POINT_WINDOW_SIZE,
+    DEFAULT_UNIT_SCALE_FOR_ZERO_SPREAD,
+)
 from anomsmith.objects.views import LabelView, ScoreView
 from anomsmith.primitives.base import BaseDetector
 
@@ -26,7 +31,9 @@ class ChangePointDetector(BaseDetector):
     """
 
     def __init__(
-        self, window_size: int = 10, threshold_multiplier: float = 3.0
+        self,
+        window_size: int = DEFAULT_CHANGE_POINT_WINDOW_SIZE,
+        threshold_multiplier: float = DEFAULT_CHANGE_POINT_THRESHOLD_MULTIPLIER,
     ) -> None:
         """Initialize ChangePointDetector.
 
@@ -65,7 +72,7 @@ class ChangePointDetector(BaseDetector):
         self._global_mean = float(np.mean(values))
         self._global_std = float(np.std(values))
         if self._global_std == 0:
-            self._global_std = 1.0
+            self._global_std = float(DEFAULT_UNIT_SCALE_FOR_ZERO_SPREAD)
 
         self._fitted = True
         logger.debug(
@@ -109,7 +116,8 @@ class ChangePointDetector(BaseDetector):
             window=self.window_size, center=False, min_periods=1
         ).std()
         # Handle zero std (avoid division by zero)
-        rolling_std = rolling_std.fillna(1.0).replace(0.0, 1.0).values
+        _unit = DEFAULT_UNIT_SCALE_FOR_ZERO_SPREAD
+        rolling_std = rolling_std.fillna(_unit).replace(0.0, _unit).values
 
         # Vectorized deviation calculations
         global_dev = np.abs(values - self._global_mean) / self._global_std
