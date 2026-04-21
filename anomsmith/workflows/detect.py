@@ -121,9 +121,7 @@ def sweep_thresholds(
         f1_list: list[float] = []
         for t in thresholds:
             y_pred = (scores >= t).astype(int)
-            precision_list.append(
-                float(compute_precision(aligned_labels, y_pred))
-            )
+            precision_list.append(float(compute_precision(aligned_labels, y_pred)))
             recall_list.append(float(compute_recall(aligned_labels, y_pred)))
             f1_list.append(float(compute_f1(aligned_labels, y_pred)))
         precision = np.asarray(precision_list)

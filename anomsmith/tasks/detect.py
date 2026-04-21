@@ -1,12 +1,12 @@
 """Detection task definitions and runners."""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
 
-from anomsmith.objects.validate import assert_series, assert_aligned
+from anomsmith.objects.validate import assert_aligned, assert_series
 from anomsmith.objects.views import LabelView, ScoreView
 from anomsmith.objects.window import WindowSpec
 from anomsmith.primitives.base import BaseDetector, BaseScorer
@@ -17,22 +17,26 @@ try:
 except ImportError:
     SeriesLike = None  # type: ignore
 
-# Try to use timesmith's DetectTask if available
+# Prefer timesmith's DetectTask when installed; otherwise use a local dataclass.
+_timesmith_detect_task: type | None
 try:
-    from timesmith.tasks import DetectTask as TimesmithDetectTask
+    from timesmith.tasks import DetectTask as _TimesmithDetectTask
 
-    # Use timesmith's DetectTask if it exists and is compatible
-    DetectTask = TimesmithDetectTask  # type: ignore
+    _timesmith_detect_task = _TimesmithDetectTask
 except (ImportError, AttributeError):
-    # Fallback to our own DetectTask
+    _timesmith_detect_task = None
+
+if _timesmith_detect_task is not None:
+    DetectTask = _timesmith_detect_task
+else:
     _SeriesLikeType = (
-        Union[pd.Series, np.ndarray]
+        pd.Series | np.ndarray
         if SeriesLike is None
-        else Union[pd.Series, np.ndarray, SeriesLike]
+        else pd.Series | np.ndarray | SeriesLike
     )
 
     @dataclass
-    class DetectTask:
+    class _FallbackDetectTask:
         """Task specification for anomaly detection.
 
         Attributes:
@@ -48,6 +52,8 @@ except (ImportError, AttributeError):
         labels: _SeriesLikeType | None = None  # type: ignore
         window_spec: WindowSpec | None = None
         cutoff: int | None = None
+
+    DetectTask = _FallbackDetectTask
 
 
 def run_scoring(
@@ -111,7 +117,7 @@ def run_detection(
         assert_aligned(series_view, score_view)
         # Return empty labels if only scorer provided
         # series_view is now a pd.Series, so use .index directly
-        empty_labels = np.zeros(len(series_view.index), dtype=int)
+        empty_labels: np.ndarray = np.zeros(len(series_view.index), dtype=int)
         label_view = LabelView(index=series_view.index, labels=empty_labels)
         return label_view, score_view
     else:

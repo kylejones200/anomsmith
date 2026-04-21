@@ -1,13 +1,37 @@
 """Anomsmith: Anomaly detection workflows that turn time series signals into actionable decisions."""
 
+from anomsmith.platform import (
+    Alert,
+    AlertLevel,
+    AlertSystem,
+    DashboardVisualizer,
+    FailureClassifier,
+    FeatureExtractor,
+    PredictiveMaintenanceSystem,
+    RealTimeIngestion,
+    RULEstimator,
+    add_degradation_rates,
+    add_rolling_statistics,
+    calculate_confusion_matrix_metrics,
+    calculate_lead_time,
+    calculate_rul,
+    compare_detectors,
+    create_rul_labels,
+    evaluate_detector,
+    plot_comparison_metrics,
+    plot_pca_boundary,
+    plot_reconstruction_error,
+    plot_sensor_drift,
+    prepare_pm_features,
+)
 from anomsmith.primitives.base import BaseDetector, BaseScorer
+from anomsmith.primitives.detectors.drift import ARIMADriftDetector
+from anomsmith.primitives.detectors.ensemble import VotingEnsembleDetector
 from anomsmith.primitives.detectors.ml import (
     IsolationForestDetector,
     LOFDetector,
     RobustCovarianceDetector,
 )
-from anomsmith.primitives.detectors.ensemble import VotingEnsembleDetector
-from anomsmith.primitives.detectors.drift import ARIMADriftDetector
 from anomsmith.primitives.detectors.pca import PCADetector
 from anomsmith.primitives.detectors.wavelet import WaveletDetector
 from anomsmith.primitives.scorers.robust_zscore import RobustZScoreScorer
@@ -82,6 +106,29 @@ _BASE_EXPORTS = [
     "WaveletDetector",
     "ARIMADriftDetector",
     "VotingEnsembleDetector",
+    # Platform (merged Anomaly Detection Toolkit PM stack)
+    "FeatureExtractor",
+    "RULEstimator",
+    "FailureClassifier",
+    "AlertSystem",
+    "Alert",
+    "AlertLevel",
+    "PredictiveMaintenanceSystem",
+    "RealTimeIngestion",
+    "DashboardVisualizer",
+    "calculate_rul",
+    "create_rul_labels",
+    "add_rolling_statistics",
+    "add_degradation_rates",
+    "prepare_pm_features",
+    "evaluate_detector",
+    "compare_detectors",
+    "calculate_lead_time",
+    "calculate_confusion_matrix_metrics",
+    "plot_pca_boundary",
+    "plot_reconstruction_error",
+    "plot_comparison_metrics",
+    "plot_sensor_drift",
 ]
 
 try:

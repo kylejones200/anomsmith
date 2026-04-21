@@ -4,8 +4,10 @@ Uses wavelet decomposition to detect anomalies in time series by identifying
 large coefficients in detail levels, which indicate sudden changes or anomalies.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -20,9 +22,10 @@ from anomsmith.primitives.base import BaseDetector
 
 if TYPE_CHECKING:
     try:
-        from timesmith.typing import SeriesLike
+        from timesmith.typing import PanelLike, SeriesLike
     except ImportError:
-        SeriesLike = None
+        PanelLike = Any  # type: ignore[misc,assignment]
+        SeriesLike = Any  # type: ignore[misc,assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +48,7 @@ class WaveletDetector(BaseDetector):
         wavelet: str = "db4",
         threshold_factor: float = 3.0,
         level: int = 5,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize WaveletDetector.
 
@@ -75,9 +78,9 @@ class WaveletDetector(BaseDetector):
 
     def fit(
         self,
-        y: Union[np.ndarray, pd.Series, "SeriesLike"],
-        X: Union[np.ndarray, pd.DataFrame, "PanelLike", None] = None,
-    ) -> "WaveletDetector":
+        y: np.ndarray | pd.Series | SeriesLike,
+        X: np.ndarray | pd.DataFrame | PanelLike | None = None,
+    ) -> WaveletDetector:
         """Fit the wavelet detector.
 
         Args:
@@ -107,7 +110,7 @@ class WaveletDetector(BaseDetector):
         )
         return self
 
-    def score(self, y: Union[np.ndarray, pd.Series, "SeriesLike"]) -> ScoreView:
+    def score(self, y: np.ndarray | pd.Series | SeriesLike) -> ScoreView:
         """Score anomalies using wavelet decomposition.
 
         Args:
@@ -173,7 +176,7 @@ class WaveletDetector(BaseDetector):
 
         return ScoreView(index=index, scores=anomaly_scores)
 
-    def predict(self, y: Union[np.ndarray, pd.Series, "SeriesLike"]) -> LabelView:
+    def predict(self, y: np.ndarray | pd.Series | SeriesLike) -> LabelView:
         """Predict anomaly labels.
 
         Args:

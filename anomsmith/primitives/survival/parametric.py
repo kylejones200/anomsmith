@@ -5,7 +5,7 @@ such as Weibull (bathtub curve), Exponential, LogNormal, etc.
 """
 
 import logging
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -84,11 +84,9 @@ class ParametricSurvivalModel(CoxSurvivalModel):
             "generalized_gamma",
             "spline",
         ] = "weibull",
-        breakpoints: Optional[
-            list[float]
-        ] = None,  # For piecewise_exponential and spline
+        breakpoints: list[float] | None = None,  # For piecewise_exponential and spline
         alpha: float = DEFAULT_CONFIDENCE_ALPHA,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
         **kwargs,
     ) -> None:
         """Initialize parametric survival model."""
@@ -113,14 +111,14 @@ class ParametricSurvivalModel(CoxSurvivalModel):
         self.alpha = alpha
         self.kwargs = kwargs
         self.model_ = None  # Will be set in fit()
-        self.durations_: Optional[np.ndarray] = None
-        self.events_: Optional[np.ndarray] = None
+        self.durations_: np.ndarray | None = None
+        self.events_: np.ndarray | None = None
 
     def fit(
         self,
-        X: Union[np.ndarray, pd.DataFrame, None],
-        durations: Union[np.ndarray, pd.Series],
-        events: Union[np.ndarray, pd.Series, None] = None,
+        X: np.ndarray | pd.DataFrame | None,
+        durations: np.ndarray | pd.Series,
+        events: np.ndarray | pd.Series | None = None,
         y: Union[np.ndarray, pd.Series, "SeriesLike", None] = None,
     ) -> "ParametricSurvivalModel":
         """Fit the parametric survival model.
@@ -176,8 +174,8 @@ class ParametricSurvivalModel(CoxSurvivalModel):
 
     def predict_survival_function(
         self,
-        X: Union[np.ndarray, pd.DataFrame, None] = None,
-        time_points: Optional[np.ndarray] = None,
+        X: np.ndarray | pd.DataFrame | None = None,
+        time_points: np.ndarray | None = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t).
 
@@ -213,7 +211,7 @@ class ParametricSurvivalModel(CoxSurvivalModel):
         return pd.DataFrame(surv_matrix, index=time_index, columns=range(n_samples))
 
     def predict_risk_score(
-        self, X: Union[np.ndarray, pd.DataFrame, None] = None
+        self, X: np.ndarray | pd.DataFrame | None = None
     ) -> np.ndarray:
         """Predict risk scores.
 
@@ -239,8 +237,8 @@ class ParametricSurvivalModel(CoxSurvivalModel):
         return np.full(n_samples, -median_survival)
 
     def predict(
-        self, time_points: Union[float, int, np.ndarray, pd.Series]
-    ) -> Union[float, np.ndarray]:
+        self, time_points: float | int | np.ndarray | pd.Series
+    ) -> float | np.ndarray:
         """Predict survival probability at specific time points.
 
         Args:

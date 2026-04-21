@@ -13,6 +13,8 @@ The fourth layer holds **workflows**. Workflows handle reality. They accept pand
 
 Each layer imports only from layers below it. This rule prevents leakage between scoring, decision logic, and evaluation.
 
+**Pragmatic exceptions.** Some workflows still call primitives directly (for example threshold helpers or constructing a detector inside a high level workflow). That is intentional technical debt in a few modules: it keeps the user-facing API small without hiding important control flow. The separation-of-concerns audit in the repository tracks which call sites are open versus fixed.
+
 Anomsmith shares ``SeriesLike`` and ``PanelLike`` definitions with Timesmith. This allows anomaly detection to plug into forecasting, plotting, and domain workflows without translation code.
 
 The architecture favors clarity over cleverness. It allows many detectors to coexist without collapsing into a single abstraction.

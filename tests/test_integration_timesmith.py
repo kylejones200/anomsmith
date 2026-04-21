@@ -6,13 +6,12 @@ and that objects can move seamlessly between the two libraries.
 
 import numpy as np
 import pandas as pd
-import pytest
 
 # Import from timesmith.typing (single source of truth)
 from timesmith.typing import SeriesLike
 
 # Import anomsmith
-from anomsmith import detect_anomalies, ThresholdRule
+from anomsmith import ThresholdRule, detect_anomalies
 from anomsmith.primitives.scorers.robust_zscore import RobustZScoreScorer
 
 

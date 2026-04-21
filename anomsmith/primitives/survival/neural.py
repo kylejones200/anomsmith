@@ -5,7 +5,7 @@ feature interactions and time-dependent effects.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -64,7 +64,7 @@ class LogisticHazardModel(CoxSurvivalModel):
         num_nodes: list[int] = None,
         batch_size: int = DEFAULT_NEURAL_SURVIVAL_BATCH_SIZE,
         epochs: int = DEFAULT_NEURAL_SURVIVAL_EPOCHS,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize LogisticHazard model."""
         if not PYCOX_AVAILABLE:
@@ -78,15 +78,15 @@ class LogisticHazardModel(CoxSurvivalModel):
         self.num_nodes = num_nodes or list(DEFAULT_NEURAL_SURVIVAL_HIDDEN_LAYERS)
         self.batch_size = batch_size
         self.epochs = epochs
-        self.model_: Optional[LogisticHazard] = None  # type: ignore
-        self.labtrans_: Optional[LabTransDiscreteTime] = None  # type: ignore
-        self.n_features_: Optional[int] = None
+        self.model_: LogisticHazard | None = None  # type: ignore
+        self.labtrans_: LabTransDiscreteTime | None = None  # type: ignore
+        self.n_features_: int | None = None
 
     def fit(
         self,
-        X: Union[np.ndarray, pd.DataFrame, None],
-        durations: Union[np.ndarray, pd.Series],
-        events: Union[np.ndarray, pd.Series, None] = None,
+        X: np.ndarray | pd.DataFrame | None,
+        durations: np.ndarray | pd.Series,
+        events: np.ndarray | pd.Series | None = None,
         y: Union[np.ndarray, pd.Series, "SeriesLike", None] = None,
     ) -> "LogisticHazardModel":
         """Fit the LogisticHazard model.
@@ -152,8 +152,8 @@ class LogisticHazardModel(CoxSurvivalModel):
 
     def predict_survival_function(
         self,
-        X: Union[np.ndarray, pd.DataFrame],
-        time_points: Optional[np.ndarray] = None,
+        X: np.ndarray | pd.DataFrame,
+        time_points: np.ndarray | None = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t|X).
 
@@ -177,14 +177,16 @@ class LogisticHazardModel(CoxSurvivalModel):
             # Interpolate to requested time points
             # Use reindex with nearest method, forward fill for extrapolation
             surv_interp = surv_df.reindex(time_points, method="nearest")
-            surv_interp = surv_interp.ffill().bfill().fillna(
-                DEFAULT_SURVIVAL_CURVE_EXTRAPOLATION_FILL
+            surv_interp = (
+                surv_interp.ffill()
+                .bfill()
+                .fillna(DEFAULT_SURVIVAL_CURVE_EXTRAPOLATION_FILL)
             )
             return surv_interp
 
         return surv_df
 
-    def predict_risk_score(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict_risk_score(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict relative risk scores.
 
         Args:
@@ -232,7 +234,7 @@ class DeepSurvModel(CoxSurvivalModel):
         num_nodes: list[int] = None,
         batch_size: int = DEFAULT_NEURAL_SURVIVAL_BATCH_SIZE,
         epochs: int = DEFAULT_NEURAL_SURVIVAL_EPOCHS,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize DeepSurv model."""
         if not PYCOX_AVAILABLE:
@@ -244,14 +246,14 @@ class DeepSurvModel(CoxSurvivalModel):
         self.num_nodes = num_nodes or list(DEFAULT_NEURAL_SURVIVAL_HIDDEN_LAYERS)
         self.batch_size = batch_size
         self.epochs = epochs
-        self.model_: Optional[CoxPH] = None  # type: ignore
-        self.n_features_: Optional[int] = None
+        self.model_: CoxPH | None = None  # type: ignore
+        self.n_features_: int | None = None
 
     def fit(
         self,
-        X: Union[np.ndarray, pd.DataFrame, None],
-        durations: Union[np.ndarray, pd.Series],
-        events: Union[np.ndarray, pd.Series, None] = None,
+        X: np.ndarray | pd.DataFrame | None,
+        durations: np.ndarray | pd.Series,
+        events: np.ndarray | pd.Series | None = None,
         y: Union[np.ndarray, pd.Series, "SeriesLike", None] = None,
     ) -> "DeepSurvModel":
         """Fit the DeepSurv model.
@@ -311,8 +313,8 @@ class DeepSurvModel(CoxSurvivalModel):
 
     def predict_survival_function(
         self,
-        X: Union[np.ndarray, pd.DataFrame],
-        time_points: Optional[np.ndarray] = None,
+        X: np.ndarray | pd.DataFrame,
+        time_points: np.ndarray | None = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t|X).
 
@@ -336,14 +338,16 @@ class DeepSurvModel(CoxSurvivalModel):
             # Interpolate to requested time points
             # Use reindex with nearest method, forward fill for extrapolation
             surv_interp = surv_df.reindex(time_points, method="nearest")
-            surv_interp = surv_interp.ffill().bfill().fillna(
-                DEFAULT_SURVIVAL_CURVE_EXTRAPOLATION_FILL
+            surv_interp = (
+                surv_interp.ffill()
+                .bfill()
+                .fillna(DEFAULT_SURVIVAL_CURVE_EXTRAPOLATION_FILL)
             )
             return surv_interp
 
         return surv_df
 
-    def predict_risk_score(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict_risk_score(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict relative risk scores (partial hazards).
 
         Args:

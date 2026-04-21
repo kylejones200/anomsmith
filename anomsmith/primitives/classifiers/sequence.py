@@ -4,7 +4,7 @@ Classifies whether a sequence of sensor readings indicates distress.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -42,7 +42,7 @@ class SequenceDistressClassifier:
         self,
         window_size: int = 30,
         n_estimators: int = 100,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize SequenceDistressClassifier.
 
@@ -124,7 +124,7 @@ class SequenceDistressClassifier:
         probas = self.classifier_.predict_proba(X_scaled)
         warn_t = DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD
         distress_t = DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD
-        states = np.zeros(len(probas), dtype=int)
+        states: np.ndarray = np.zeros(len(probas), dtype=int)
         if probas.shape[1] > 1:
             distress_proba = probas[:, 1]  # Probability of distress class
             states[distress_proba > distress_t] = HealthState.DISTRESS

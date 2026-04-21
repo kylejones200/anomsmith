@@ -5,7 +5,6 @@ ScoreView and LabelView are kept for anomaly-specific outputs.
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd

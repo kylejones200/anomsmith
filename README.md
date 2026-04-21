@@ -9,6 +9,61 @@
 
 Anomaly detection workflows that turn time series signals into actionable decisions.
 
+## When to use Anomsmith
+
+| You want… | Raw scikit-learn / notebooks | Anomsmith |
+|-----------|------------------------------|-----------|
+| One-off anomaly scores on a `Series` | Fit an estimator, wrap thresholding yourself | `score_anomalies` / `detect_anomalies` with explicit `ThresholdRule` |
+| Threshold tuning and simple reports | Manual loops and ad hoc metrics | `sweep_thresholds`, `report_detection`, `workflows.eval` |
+| Time-series-safe backtests | Easy to get wrong (shuffle leakage) | `backtest_detector` with expanding splits |
+| Predictive maintenance and health views | Glue code across models | Asset health, PCA distance tracks, optional survival paths (see docs) |
+| S3 batch scoring | Custom I/O + scoring | `workflows` batch helpers (optional `aws` extra) |
+
+Anomsmith is a **library**, not a hosted product: you keep your data plane and wire outputs into your own jobs or services.
+
+## Optional install extras
+
+Install only what you need to keep environments small and reproducible.
+
+| Extra | Purpose | Notable dependencies |
+|-------|---------|----------------------|
+| *(core)* | Default PyPI install | `numpy`, `pandas`, `scikit-learn`, `timesmith` |
+| `dev` | Tests, Ruff, Mypy, coverage | `pytest`, `pytest-cov`, `ruff`, `mypy` |
+| `deep` | Neural detectors / classifiers | `tensorflow`, `torch` |
+| `wavelet` | `WaveletDetector` | `PyWavelets` |
+| `plots` | Plotting integration | `plotsmith` (**Python 3.12+** only) |
+| `aws` | S3-oriented batch helpers | `boto3` |
+| `stats` | ARIMA drift and related stats | `statsmodels`, `scipy` |
+| `survival` | Survival and RUL-style workflows | `lifelines`, `pycox`, `torch` |
+| `ordinal` | Ordinal distress / fusion stacks | `mord`, `lightgbm`, `coral-pytorch` |
+| `all` | All of the above extras | Same as installing each extra (respects version markers) |
+
+```bash
+pip install "anomsmith[stats,survival]"
+```
+
+## Predictive maintenance platform
+
+The **`anomsmith.platform`** subpackage (merged from the former *Anomaly Detection Toolkit* / `asset_health` repo) adds feature extraction, RandomForest RUL/failure models, alert escalation, streaming ingestion, and optional matplotlib dashboards. It uses the **same** `BaseDetector` / `LabelView` / `ScoreView` stack as the rest of the library—there is no second detector hierarchy.
+
+```python
+from anomsmith import FeatureExtractor, PredictiveMaintenanceSystem, IsolationForestDetector
+
+extractor = FeatureExtractor(rolling_windows=[5, 20])
+detector = IsolationForestDetector(random_state=0)
+# Fit detector on the same feature matrix the PM system will score at runtime.
+Xf = extractor.extract(sensor_series)
+detector.fit(Xf.values)
+
+pm = PredictiveMaintenanceSystem(
+    feature_extractor=extractor,
+    anomaly_detector=detector,
+)
+pm.process(sensor_series)
+```
+
+See the [Platform](https://anomsmith.readthedocs.io/en/latest/platform.html) chapter on Read the Docs for migration notes from `anomaly_detection_toolkit`.
+
 ## Architecture
 
 Anomsmith follows a strict 4-layer architecture that enforces clear separation of concerns:

@@ -1,7 +1,7 @@
 """Ensemble methods for anomaly detection."""
 
 import logging
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -32,9 +32,9 @@ class VotingEnsembleDetector(BaseDetector):
 
     def __init__(
         self,
-        detectors: List[BaseDetector | BaseScorer],
+        detectors: list[BaseDetector | BaseScorer],
         voting_threshold: int = 2,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize VotingEnsembleDetector.
 

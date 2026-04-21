@@ -1,14 +1,12 @@
 """Utility functions for detectors to reduce code duplication."""
 
-from typing import Optional, Union
-
 import numpy as np
 import pandas as pd
 
 
 def prepare_input_data(
-    y: Union[np.ndarray, pd.Series],
-    X: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+    y: np.ndarray | pd.Series,
+    X: np.ndarray | pd.DataFrame | None = None,
 ) -> np.ndarray:
     """Prepare input data for detectors/scorers.
 
@@ -39,7 +37,7 @@ def prepare_input_data(
 
 
 def extract_index_and_values(
-    y: Union[np.ndarray, pd.Series],
+    y: np.ndarray | pd.Series,
 ) -> tuple[pd.Index, np.ndarray]:
     """Extract index and values from input.
 

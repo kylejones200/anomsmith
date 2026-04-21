@@ -3,7 +3,6 @@
 All validators raise ValueError with clear messages.
 """
 
-import numpy as np
 import pandas as pd
 
 # Import types from timesmith.typing (single source of truth)
@@ -13,6 +12,8 @@ from timesmith.typing import PanelLike, SeriesLike
 try:
     from timesmith.typing.validators import (
         assert_panel_like as timesmith_assert_panel,
+    )
+    from timesmith.typing.validators import (
         assert_series_like as timesmith_assert_series,
     )
 except ImportError:
@@ -20,6 +21,8 @@ except ImportError:
     try:
         from timesmith.typing import (
             assert_panel as timesmith_assert_panel,
+        )
+        from timesmith.typing import (
             assert_series as timesmith_assert_series,
         )
     except ImportError:

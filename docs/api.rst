@@ -30,3 +30,11 @@ Workflows
    :undoc-members:
    :show-inheritance:
 
+Platform (predictive maintenance)
+---------------------------------
+
+.. automodule:: anomsmith.platform
+   :members:
+   :undoc-members:
+   :show-inheritance:
+

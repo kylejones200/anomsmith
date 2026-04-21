@@ -1,7 +1,7 @@
 """Statistical anomaly detection scorers."""
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -36,7 +36,7 @@ class ZScoreScorer(BaseScorer):
         random_state: Random state for reproducibility (not used, kept for compatibility)
     """
 
-    def __init__(self, n_std: float = 3.0, random_state: Optional[int] = None) -> None:
+    def __init__(self, n_std: float = 3.0, random_state: int | None = None) -> None:
         self.n_std = n_std
         self.random_state = random_state
         self.mean_: np.ndarray | None = None
@@ -46,8 +46,8 @@ class ZScoreScorer(BaseScorer):
 
     def fit(
         self,
-        y: Union[np.ndarray, pd.Series],
-        X: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+        y: np.ndarray | pd.Series,
+        X: np.ndarray | pd.DataFrame | None = None,
     ) -> "ZScoreScorer":
         """Fit the scorer by computing mean and standard deviation.
 
@@ -122,7 +122,7 @@ class IQRScorer(BaseScorer):
     def __init__(
         self,
         factor: float = TUKEY_FENCE_IQR_MULTIPLIER,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         self.factor = factor
         self.random_state = random_state
@@ -134,8 +134,8 @@ class IQRScorer(BaseScorer):
 
     def fit(
         self,
-        y: Union[np.ndarray, pd.Series],
-        X: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+        y: np.ndarray | pd.Series,
+        X: np.ndarray | pd.DataFrame | None = None,
     ) -> "IQRScorer":
         """Fit the scorer by computing quartiles.
 
@@ -167,7 +167,7 @@ class IQRScorer(BaseScorer):
         logger.debug(f"Fitted IQRScorer: q1={self.q1_}, q3={self.q3_}")
         return self
 
-    def score(self, y: Union[np.ndarray, pd.Series]) -> ScoreView:
+    def score(self, y: np.ndarray | pd.Series) -> ScoreView:
         """Score anomalies using IQR bounds.
 
         Args:

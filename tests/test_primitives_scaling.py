@@ -1,7 +1,6 @@
 """Tests for robust_zscore scaling."""
 
 import numpy as np
-import pytest
 
 from anomsmith.primitives.scaling import robust_zscore
 

@@ -5,7 +5,7 @@ concordance index (C-index) for ranking ability.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -44,9 +44,9 @@ def _median_survival_time_from_step_function(col: pd.Series):
 
 
 def compute_concordance_index(
-    durations: Union[np.ndarray, pd.Series],
-    risk_scores: Union[np.ndarray, pd.Series],
-    events: Union[np.ndarray, pd.Series, None] = None,
+    durations: np.ndarray | pd.Series,
+    risk_scores: np.ndarray | pd.Series,
+    events: np.ndarray | pd.Series | None = None,
 ) -> float:
     """Compute concordance index (C-index) for survival model evaluation.
 
@@ -123,9 +123,9 @@ def compute_concordance_index(
 
 def evaluate_survival_model(
     surv_df: pd.DataFrame,
-    durations: Union[np.ndarray, pd.Series],
-    events: Union[np.ndarray, pd.Series, None] = None,
-    risk_scores: Optional[Union[np.ndarray, pd.Series]] = None,
+    durations: np.ndarray | pd.Series,
+    events: np.ndarray | pd.Series | None = None,
+    risk_scores: np.ndarray | pd.Series | None = None,
 ) -> dict[str, float]:
     """Evaluate survival model performance.
 

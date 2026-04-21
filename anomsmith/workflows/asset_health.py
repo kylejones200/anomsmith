@@ -5,7 +5,7 @@ prioritize maintenance actions.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -20,7 +20,6 @@ from anomsmith.constants import (
     DEFAULT_RANDOM_FOREST_N_ESTIMATORS,
     FUSION_WEIGHT_SUM_ABSOLUTE_TOLERANCE,
 )
-from anomsmith.objects.health_state import HealthStateView
 from anomsmith.primitives.classifiers.failure_risk import FailureRiskClassifier
 from anomsmith.primitives.detectors.ml import IsolationForestDetector
 
@@ -33,7 +32,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _validate_fusion_weights(classification_weight: float, anomaly_weight: float) -> None:
+def _validate_fusion_weights(
+    classification_weight: float, anomaly_weight: float
+) -> None:
     if classification_weight < 0 or anomaly_weight < 0:
         raise ValueError(
             "classification_weight and anomaly_weight must be non-negative, "
@@ -42,22 +43,21 @@ def _validate_fusion_weights(classification_weight: float, anomaly_weight: float
     s = classification_weight + anomaly_weight
     if abs(s - 1.0) > FUSION_WEIGHT_SUM_ABSOLUTE_TOLERANCE:
         raise ValueError(
-            "classification_weight + anomaly_weight must sum to 1.0, "
-            f"got sum={s}"
+            f"classification_weight + anomaly_weight must sum to 1.0, got sum={s}"
         )
 
 
 def assess_asset_health(
     sensor_data: pd.DataFrame,
-    asset_ids: Optional[pd.Series] = None,
-    feature_cols: Optional[list[str]] = None,
-    failure_labels: Optional[pd.Series | np.ndarray] = None,
+    asset_ids: pd.Series | None = None,
+    feature_cols: list[str] | None = None,
+    failure_labels: pd.Series | np.ndarray | None = None,
     use_classification: bool = True,
     use_anomaly_detection: bool = True,
     contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
     n_estimators: int = DEFAULT_RANDOM_FOREST_N_ESTIMATORS,
     isolation_n_estimators: int = DEFAULT_ISOLATION_FOREST_N_ESTIMATORS,
-    random_state: Optional[int] = None,
+    random_state: int | None = None,
     *,
     risk_proba_warning_threshold: float = DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD,
     risk_proba_distress_threshold: float = DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD,
@@ -129,7 +129,7 @@ def assess_asset_health(
 
     # Classification-based failure risk prediction
     failure_risks = np.zeros(len(X))
-    health_states = np.zeros(len(X), dtype=int)
+    health_states: np.ndarray = np.zeros(len(X), dtype=int)
 
     if use_classification and failure_labels is not None:
         classifier = FailureRiskClassifier(
@@ -162,7 +162,7 @@ def assess_asset_health(
     )
 
     # Anomaly detection
-    anomaly_flags = np.zeros(len(X), dtype=int)
+    anomaly_flags: np.ndarray = np.zeros(len(X), dtype=int)
     anomaly_scores = np.zeros(len(X))
 
     if use_anomaly_detection:
@@ -242,7 +242,7 @@ def assess_asset_health(
 
 def rank_assets_by_risk(
     asset_health: pd.DataFrame,
-    top_n: Optional[int] = None,
+    top_n: int | None = None,
 ) -> pd.DataFrame:
     """Rank assets by combined risk score.
 

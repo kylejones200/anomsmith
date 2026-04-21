@@ -4,10 +4,9 @@ Maps health states to actions based on state transitions and thresholds.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
-import pandas as pd
 
 from anomsmith.constants import (
     DEFAULT_POLICY_BASE_RISKS,
@@ -87,7 +86,7 @@ class SimpleHealthPolicy:
         index = health_states.index
 
         # Determine actions based on state transitions - vectorized
-        actions = np.full(len(states), Action.WAIT, dtype=int)
+        actions: np.ndarray = np.full(len(states), Action.WAIT, dtype=int)
 
         # Distress always triggers intervention
         actions[states == 2] = Action.INTERVENE

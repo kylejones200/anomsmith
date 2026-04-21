@@ -4,7 +4,7 @@ Base implementation for Cox regression-based survival analysis.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -31,7 +31,7 @@ class CoxSurvivalModel(BaseEstimator):
         random_state: Random state for reproducibility
     """
 
-    def __init__(self, random_state: Optional[int] = None) -> None:
+    def __init__(self, random_state: int | None = None) -> None:
         """Initialize Cox survival model."""
         self.random_state = random_state
         super().__init__(random_state=random_state)
@@ -39,9 +39,9 @@ class CoxSurvivalModel(BaseEstimator):
 
     def fit(
         self,
-        X: Union[np.ndarray, pd.DataFrame, None],
-        durations: Union[np.ndarray, pd.Series],
-        events: Union[np.ndarray, pd.Series, None] = None,
+        X: np.ndarray | pd.DataFrame | None,
+        durations: np.ndarray | pd.Series,
+        events: np.ndarray | pd.Series | None = None,
         y: Union[np.ndarray, pd.Series, "SeriesLike", None] = None,
     ) -> "CoxSurvivalModel":
         """Fit the survival model.
@@ -59,8 +59,8 @@ class CoxSurvivalModel(BaseEstimator):
 
     def predict_survival_function(
         self,
-        X: Union[np.ndarray, pd.DataFrame],
-        time_points: Optional[np.ndarray] = None,
+        X: np.ndarray | pd.DataFrame,
+        time_points: np.ndarray | None = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t|X).
 
@@ -75,7 +75,7 @@ class CoxSurvivalModel(BaseEstimator):
             "Subclasses must implement predict_survival_function method"
         )
 
-    def predict_risk_score(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict_risk_score(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict relative risk scores (hazard ratios).
 
         Args:
@@ -88,7 +88,7 @@ class CoxSurvivalModel(BaseEstimator):
 
     def predict_time_to_failure(
         self,
-        X: Union[np.ndarray, pd.DataFrame],
+        X: np.ndarray | pd.DataFrame,
         threshold: float = DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF,
     ) -> np.ndarray:
         """Predict median time-to-failure (where survival probability = threshold).
@@ -119,7 +119,7 @@ class CoxSurvivalModel(BaseEstimator):
 
         # Handle case where first value is below threshold correctly
         # If first is below, it's valid - use it. Otherwise argmax handles it.
-        first_below = below_threshold[0, :]
+        below_threshold[0, :]
         # Only adjust if first is not below but argmax returned 0 (no True found)
         # Actually, argmax behavior: returns 0 if no True, so we need to check
         # If first is False but argmax is 0, then no values below threshold

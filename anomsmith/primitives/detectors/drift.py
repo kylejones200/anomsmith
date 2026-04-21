@@ -3,8 +3,10 @@
 Detects drift by comparing actual values to forecasts from statistical models.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -19,15 +21,19 @@ except ImportError:
     ARIMA = None  # type: ignore
     sm = None  # type: ignore
 
-from anomsmith.constants import DEFAULT_DRIFT_DETECTION_STDDEV_THRESHOLD, NUMERICAL_EPSILON
+from anomsmith.constants import (
+    DEFAULT_DRIFT_DETECTION_STDDEV_THRESHOLD,
+    NUMERICAL_EPSILON,
+)
 from anomsmith.objects.views import LabelView, ScoreView
 from anomsmith.primitives.base import BaseDetector
 
 if TYPE_CHECKING:
     try:
-        from timesmith.typing import SeriesLike
+        from timesmith.typing import PanelLike, SeriesLike
     except ImportError:
-        SeriesLike = None
+        PanelLike = Any  # type: ignore[misc,assignment]
+        SeriesLike = Any  # type: ignore[misc,assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +54,7 @@ class ARIMADriftDetector(BaseDetector):
         self,
         order: tuple[int, int, int] = (1, 1, 1),
         threshold_std: float = DEFAULT_DRIFT_DETECTION_STDDEV_THRESHOLD,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize ARIMADriftDetector.
 
@@ -76,9 +82,9 @@ class ARIMADriftDetector(BaseDetector):
 
     def fit(
         self,
-        y: Union[np.ndarray, pd.Series, "SeriesLike"],
-        X: Union[np.ndarray, pd.DataFrame, "PanelLike", None] = None,
-    ) -> "ARIMADriftDetector":
+        y: np.ndarray | pd.Series | SeriesLike,
+        X: np.ndarray | pd.DataFrame | PanelLike | None = None,
+    ) -> ARIMADriftDetector:
         """Fit the ARIMA model on training data.
 
         Args:
@@ -106,7 +112,7 @@ class ARIMADriftDetector(BaseDetector):
             self.fitted_model_ = self.model_.fit()  # type: ignore
             # Compute residual standard deviation for threshold
             residuals = self.fitted_model_.resid  # type: ignore
-            self.residual_std_ = np.std(residuals)
+            self.residual_std_ = float(np.std(residuals))
             self._fitted = True
             logger.debug(
                 f"Fitted ARIMADriftDetector: residual_std={self.residual_std_:.4f}"
@@ -117,7 +123,7 @@ class ARIMADriftDetector(BaseDetector):
 
         return self
 
-    def score(self, y: Union[np.ndarray, pd.Series, "SeriesLike"]) -> ScoreView:
+    def score(self, y: np.ndarray | pd.Series | SeriesLike) -> ScoreView:
         """Score drift using ARIMA residuals.
 
         Args:
@@ -163,7 +169,7 @@ class ARIMADriftDetector(BaseDetector):
 
         return ScoreView(index=index, scores=scores)
 
-    def predict(self, y: Union[np.ndarray, pd.Series, "SeriesLike"]) -> LabelView:
+    def predict(self, y: np.ndarray | pd.Series | SeriesLike) -> LabelView:
         """Predict drift labels.
 
         Args:

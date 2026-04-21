@@ -4,7 +4,7 @@ Workflows for health state prediction, discretization, and policy evaluation.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -33,14 +33,12 @@ logger = logging.getLogger(__name__)
 
 
 def _coerce_health_state_view(
-    health_states: Union[pd.Series, np.ndarray, HealthStateView],
+    health_states: pd.Series | np.ndarray | HealthStateView,
 ) -> HealthStateView:
     if isinstance(health_states, HealthStateView):
         return health_states
     if isinstance(health_states, pd.Series):
-        return HealthStateView(
-            index=health_states.index, states=health_states.values
-        )
+        return HealthStateView(index=health_states.index, states=health_states.values)
     index = pd.RangeIndex(start=0, stop=len(health_states))
     return HealthStateView(index=index, states=np.asarray(health_states))
 
@@ -80,8 +78,8 @@ def discretize_rul(
 
 
 def apply_policy(
-    health_states: Union[pd.Series, np.ndarray, HealthStateView],
-    previous_states: Optional[Union[pd.Series, np.ndarray, HealthStateView]] = None,
+    health_states: pd.Series | np.ndarray | HealthStateView,
+    previous_states: pd.Series | np.ndarray | HealthStateView | None = None,
     intervene_cost: float = DEFAULT_POLICY_INTERVENE_COST,
     review_cost: float = DEFAULT_POLICY_REVIEW_COST,
     wait_cost: float = DEFAULT_POLICY_WAIT_COST,
@@ -113,7 +111,7 @@ def apply_policy(
     """
     health_state_view = _coerce_health_state_view(health_states)
 
-    previous_state_view: Optional[HealthStateView] = None
+    previous_state_view: HealthStateView | None = None
     if previous_states is not None:
         previous_state_view = _coerce_health_state_view(previous_states)
 
@@ -132,8 +130,8 @@ def apply_policy(
 
 
 def evaluate_policy(
-    health_states: Union[pd.Series, np.ndarray, HealthStateView],
-    previous_states: Optional[Union[pd.Series, np.ndarray, HealthStateView]] = None,
+    health_states: pd.Series | np.ndarray | HealthStateView,
+    previous_states: pd.Series | np.ndarray | HealthStateView | None = None,
     intervene_cost: float = DEFAULT_POLICY_INTERVENE_COST,
     review_cost: float = DEFAULT_POLICY_REVIEW_COST,
     wait_cost: float = DEFAULT_POLICY_WAIT_COST,
@@ -165,7 +163,7 @@ def evaluate_policy(
     """
     health_state_view = _coerce_health_state_view(health_states)
 
-    previous_state_view: Optional[HealthStateView] = None
+    previous_state_view: HealthStateView | None = None
     if previous_states is not None:
         previous_state_view = _coerce_health_state_view(previous_states)
 

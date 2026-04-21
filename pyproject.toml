@@ -25,7 +25,9 @@ maintainers = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+    "pytest-cov>=4.0",
     "ruff>=0.1.0",
+    "mypy>=1.8.0",
 ]
 deep = [
     "tensorflow>=2.8.0",
@@ -35,7 +37,7 @@ wavelet = [
     "PyWavelets>=1.3.0",
 ]
 plots = [
-    "plotsmith>=0.1.0",
+    "plotsmith>=0.1.0; python_version>='3.12'",
 ]
 aws = [
     "boto3>=1.26.0",
@@ -189,3 +191,8 @@ ignore = [
     "N806",  # Variable should be lowercase (if using stats conventions)
     "N803",  # Argument should be lowercase (if using stats conventions)
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# Re-exports for public API / conditional optional stacks
+"anomsmith/__init__.py" = ["F401"]
+"anomsmith/primitives/classifiers/__init__.py" = ["F401"]

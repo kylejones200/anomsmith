@@ -17,6 +17,7 @@ Anomsmith does not replace forecasting or monitoring systems. It complements the
 
    getting_started
    architecture
+   platform
    design_decisions
    readme
    api

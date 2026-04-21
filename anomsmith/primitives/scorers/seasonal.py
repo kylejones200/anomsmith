@@ -4,7 +4,7 @@ Detects anomalies by comparing values to seasonal baselines (e.g., weekly, month
 """
 
 import logging
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -36,7 +36,7 @@ class SeasonalBaselineScorer(BaseScorer):
     def __init__(
         self,
         seasonality: Literal["week", "month", "day", "hour"] = "week",
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize SeasonalBaselineScorer.
 

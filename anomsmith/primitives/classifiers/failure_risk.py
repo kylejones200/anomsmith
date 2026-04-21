@@ -5,7 +5,7 @@ and asset attributes.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -41,7 +41,7 @@ class FailureRiskClassifier:
     def __init__(
         self,
         n_estimators: int = 100,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize FailureRiskClassifier.
 
@@ -59,8 +59,8 @@ class FailureRiskClassifier:
 
     def fit(
         self,
-        X: Union[np.ndarray, pd.DataFrame],
-        y: Union[np.ndarray, pd.Series],
+        X: np.ndarray | pd.DataFrame,
+        y: np.ndarray | pd.Series,
     ) -> "FailureRiskClassifier":
         """Fit the failure risk classifier.
 
@@ -94,7 +94,7 @@ class FailureRiskClassifier:
 
     def predict_health_states(
         self,
-        X: Union[np.ndarray, pd.DataFrame],
+        X: np.ndarray | pd.DataFrame,
         index: pd.Index | None = None,
         risk_threshold: float = DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD,
         distress_threshold: float = DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD,
@@ -134,7 +134,7 @@ class FailureRiskClassifier:
             risk_proba = probas[:, 0]
 
         # Convert to health states
-        states = np.zeros(len(risk_proba), dtype=int)
+        states: np.ndarray = np.zeros(len(risk_proba), dtype=int)
         states[risk_proba > distress_threshold] = HealthState.DISTRESS
         states[(risk_proba > risk_threshold) & (risk_proba <= distress_threshold)] = (
             HealthState.WARNING
@@ -142,7 +142,7 @@ class FailureRiskClassifier:
 
         return HealthStateView(index=index, states=states)
 
-    def predict_proba(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict_proba(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict failure risk probabilities.
 
         Args:
@@ -162,7 +162,7 @@ class FailureRiskClassifier:
         X_scaled = self.scaler_.transform(X_data)
         return self.classifier_.predict_proba(X_scaled)
 
-    def predict(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict binary failure labels.
 
         Args:

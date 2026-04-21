@@ -59,7 +59,7 @@ def discretize_rul_to_health_states(
             index = pd.RangeIndex(start=0, stop=len(rul_values))
 
     # Discretize RUL - vectorized
-    states = np.zeros(len(rul_values), dtype=int)
+    states: np.ndarray = np.zeros(len(rul_values), dtype=int)
     states[(rul_values > warning_threshold) & (rul_values <= healthy_threshold)] = (
         HealthState.WARNING
     )

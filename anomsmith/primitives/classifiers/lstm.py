@@ -5,7 +5,7 @@ Requires TensorFlow/Keras (optional dependency).
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -61,7 +61,7 @@ class LSTMDistressClassifier:
         n_features: int = 3,
         epochs: int = 20,
         batch_size: int = 32,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize LSTMDistressClassifier.
 
@@ -193,7 +193,7 @@ class LSTMDistressClassifier:
 
         warn_t = DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD
         distress_t = DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD
-        states = np.zeros(len(probas), dtype=int)
+        states: np.ndarray = np.zeros(len(probas), dtype=int)
         states[probas > distress_t] = HealthState.DISTRESS
         states[(probas > warn_t) & (probas <= distress_t)] = HealthState.WARNING
 
@@ -244,7 +244,7 @@ class AttentionLSTMDistressClassifier:
         n_features: int = 3,
         epochs: int = 20,
         batch_size: int = 32,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize AttentionLSTMDistressClassifier."""
         if not TENSORFLOW_AVAILABLE:
@@ -406,7 +406,7 @@ class AttentionLSTMDistressClassifier:
 
         warn_t = DEFAULT_FAILURE_PROBA_WARNING_THRESHOLD
         distress_t = DEFAULT_FAILURE_PROBA_DISTRESS_THRESHOLD
-        states = np.zeros(len(probas), dtype=int)
+        states: np.ndarray = np.zeros(len(probas), dtype=int)
         states[probas > distress_t] = HealthState.DISTRESS
         states[(probas > warn_t) & (probas <= distress_t)] = HealthState.WARNING
 

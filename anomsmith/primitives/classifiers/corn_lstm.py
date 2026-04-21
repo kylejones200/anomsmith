@@ -5,7 +5,7 @@ the natural ordering of health states.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ import pandas as pd
 try:
     import torch
     import torch.nn as nn
-    from torch.utils.data import Dataset, DataLoader
+    from torch.utils.data import DataLoader, Dataset
 
     TORCH_AVAILABLE = True
 except ImportError:
@@ -24,8 +24,8 @@ except ImportError:
     DataLoader = None  # type: ignore
 
 try:
-    from coral_pytorch.losses import corn_loss
     from coral_pytorch.dataset import corn_label_from_logits
+    from coral_pytorch.losses import corn_loss
 
     CORAL_PYTORCH_AVAILABLE = True
 except ImportError:
@@ -42,7 +42,7 @@ from anomsmith.constants import (
     DEFAULT_CORN_LSTM_SEQ_LEN,
     DEFAULT_NEURAL_LEARNING_RATE,
 )
-from anomsmith.objects.health_state import HealthState, HealthStateView
+from anomsmith.objects.health_state import HealthStateView
 from anomsmith.primitives.base import BaseEstimator
 
 if TYPE_CHECKING:
@@ -172,7 +172,7 @@ class CORNLSTMClassifier(BaseEstimator):
         epochs: int = DEFAULT_CORN_LSTM_EPOCHS,
         batch_size: int = DEFAULT_CORN_LSTM_BATCH_SIZE,
         learning_rate: float = DEFAULT_NEURAL_LEARNING_RATE,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize CORN LSTM classifier."""
         if not TORCH_AVAILABLE:
@@ -204,7 +204,7 @@ class CORNLSTMClassifier(BaseEstimator):
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.random_state = random_state
-        self.model_: Optional[CORNModel] = None  # type: ignore
+        self.model_: CORNModel | None = None  # type: ignore
         self._fitted = False
 
         if random_state is not None:
@@ -321,7 +321,7 @@ class CORNLSTMClassifier(BaseEstimator):
         return labels.astype(int)
 
     def predict_health_states(
-        self, sequences: np.ndarray, index: Optional[pd.Index] = None
+        self, sequences: np.ndarray, index: pd.Index | None = None
     ) -> HealthStateView:
         """Predict health states as HealthStateView.
 

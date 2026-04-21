@@ -5,7 +5,7 @@ is critical or when data is sparse.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -51,7 +51,7 @@ class LifelinesCoxModel(CoxSurvivalModel):
         self,
         penalizer: float = DEFAULT_LIFELINES_PENALIZER,
         l1_ratio: float = DEFAULT_LIFELINES_L1_RATIO,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize Lifelines Cox model."""
         if not LIFELINES_AVAILABLE:
@@ -63,14 +63,14 @@ class LifelinesCoxModel(CoxSurvivalModel):
         super().__init__(random_state=random_state)
         self.penalizer = penalizer
         self.l1_ratio = l1_ratio
-        self.model_: Optional[CoxPHFitter] = None  # type: ignore
-        self.feature_names_: Optional[list[str]] = None
+        self.model_: CoxPHFitter | None = None  # type: ignore
+        self.feature_names_: list[str] | None = None
 
     def fit(
         self,
-        X: Union[np.ndarray, pd.DataFrame, None],
-        durations: Union[np.ndarray, pd.Series],
-        events: Union[np.ndarray, pd.Series, None] = None,
+        X: np.ndarray | pd.DataFrame | None,
+        durations: np.ndarray | pd.Series,
+        events: np.ndarray | pd.Series | None = None,
         y: Union[np.ndarray, pd.Series, "SeriesLike", None] = None,
     ) -> "LifelinesCoxModel":
         """Fit the Cox model.
@@ -108,8 +108,8 @@ class LifelinesCoxModel(CoxSurvivalModel):
 
     def predict_survival_function(
         self,
-        X: Union[np.ndarray, pd.DataFrame],
-        time_points: Optional[np.ndarray] = None,
+        X: np.ndarray | pd.DataFrame,
+        time_points: np.ndarray | None = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t|X).
 
@@ -147,7 +147,7 @@ class LifelinesCoxModel(CoxSurvivalModel):
 
         return pd.DataFrame(surv_matrix, index=time_points, columns=range(len(X_df)))
 
-    def predict_risk_score(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict_risk_score(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict relative risk scores (partial hazards).
 
         Args:

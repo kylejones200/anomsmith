@@ -5,7 +5,7 @@ Ordinal models respect the natural ordering of health states
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -45,7 +45,7 @@ class OrdinalLogisticClassifier(BaseEstimator):
     def __init__(
         self,
         alpha: float = DEFAULT_ORDINAL_REGULARIZATION_ALPHA,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize ordinal logistic classifier."""
         if not MORD_AVAILABLE:
@@ -57,13 +57,13 @@ class OrdinalLogisticClassifier(BaseEstimator):
         super().__init__(alpha=alpha, random_state=random_state)
         self.alpha = alpha
         self.random_state = random_state
-        self.model_: Optional[mord.LogisticIT] = None  # type: ignore
+        self.model_: mord.LogisticIT | None = None  # type: ignore
         self._fitted = False
 
     def fit(
         self,
         y: Union[np.ndarray, pd.Series, "SeriesLike"],
-        X: Union[np.ndarray, pd.DataFrame, None] = None,
+        X: np.ndarray | pd.DataFrame | None = None,
     ) -> "OrdinalLogisticClassifier":
         """Fit the ordinal logistic regression model.
 
@@ -110,7 +110,7 @@ class OrdinalLogisticClassifier(BaseEstimator):
         )
         return self
 
-    def predict(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict health states.
 
         Args:
@@ -131,7 +131,7 @@ class OrdinalLogisticClassifier(BaseEstimator):
         predictions = np.clip(predictions.astype(int), 0, 2)
         return predictions
 
-    def predict_proba(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict_proba(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict health state probabilities.
 
         Note: mord doesn't provide predict_proba, so this returns
@@ -153,7 +153,7 @@ class OrdinalLogisticClassifier(BaseEstimator):
         # mord doesn't provide predict_proba, so we use a workaround
         # Predict probabilities for ordinal thresholds
         predictions = self.predict(X_data)
-        n_samples = len(X_data)
+        len(X_data)
 
         # Vectorized probability assignment
         # Probability templates for each class: [p(Healthy), p(Warning), p(Distress)]
@@ -171,7 +171,7 @@ class OrdinalLogisticClassifier(BaseEstimator):
         return proba
 
     def predict_health_states(
-        self, X: Union[np.ndarray, pd.DataFrame], index: Optional[pd.Index] = None
+        self, X: np.ndarray | pd.DataFrame, index: pd.Index | None = None
     ) -> HealthStateView:
         """Predict health states as HealthStateView.
 

@@ -5,7 +5,8 @@ arrives in batches and needs to be processed efficiently.
 """
 
 import logging
-from typing import TYPE_CHECKING, Iterator, Optional, Union
+from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -23,7 +24,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _score_batch(batch_data: Union[np.ndarray, pd.Series, pd.DataFrame], scorer: BaseScorer) -> ScoreView:
+def _score_batch(
+    batch_data: np.ndarray | pd.Series | pd.DataFrame, scorer: BaseScorer
+) -> ScoreView:
     """Score one batch via tasks when input is series-like; else delegate to scorer."""
     if isinstance(batch_data, pd.DataFrame):
         if batch_data.shape[1] != 1:
@@ -33,7 +36,7 @@ def _score_batch(batch_data: Union[np.ndarray, pd.Series, pd.DataFrame], scorer:
 
 
 def _predict_batch(
-    batch_data: Union[np.ndarray, pd.Series, pd.DataFrame], detector: BaseDetector
+    batch_data: np.ndarray | pd.Series | pd.DataFrame, detector: BaseDetector
 ) -> tuple[LabelView, ScoreView]:
     if isinstance(batch_data, pd.DataFrame):
         if batch_data.shape[1] != 1:
@@ -52,7 +55,7 @@ def _series_from_s3_csv_body(body) -> pd.Series:
 
 
 def batch_score(
-    data_iterator: Iterator[Union[np.ndarray, pd.Series, pd.DataFrame]],
+    data_iterator: Iterator[np.ndarray | pd.Series | pd.DataFrame],
     scorer: BaseScorer,
 ) -> Iterator[ScoreView]:
     """Score anomalies in batches for efficient processing of large datasets.
@@ -86,7 +89,7 @@ def batch_score(
 
 
 def batch_predict(
-    data_iterator: Iterator[Union[np.ndarray, pd.Series, pd.DataFrame]],
+    data_iterator: Iterator[np.ndarray | pd.Series | pd.DataFrame],
     detector: BaseDetector,
 ) -> Iterator[tuple[LabelView, ScoreView]]:
     """Predict anomalies in batches for efficient processing.
@@ -115,7 +118,7 @@ def batch_predict(
 
 def process_s3_batch(
     s3_keys: list[str],
-    model: Union[BaseScorer, BaseDetector],
+    model: BaseScorer | BaseDetector,
     bucket: str,
     s3_client=None,
 ) -> pd.DataFrame:

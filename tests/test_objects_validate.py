@@ -10,7 +10,7 @@ from anomsmith.objects.validate import (
     assert_panel,
     assert_series,
 )
-from anomsmith.objects.views import LabelView, ScoreView
+from anomsmith.objects.views import ScoreView
 
 
 class TestAssertSeries:

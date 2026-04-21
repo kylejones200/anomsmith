@@ -12,11 +12,15 @@ from anomsmith.primitives.detectors.pca import PCADetector
 from anomsmith.primitives.scorers.robust_zscore import RobustZScoreScorer
 from anomsmith.primitives.thresholding import ThresholdRule
 from anomsmith.tasks.detect import run_scoring
+from anomsmith.workflows.asset_health import assess_asset_health
 from anomsmith.workflows.batch_inference import _score_batch
 from anomsmith.workflows.detect import detect_anomalies, sweep_thresholds
-from anomsmith.workflows.eval.metrics import compute_f1, compute_precision, compute_recall
+from anomsmith.workflows.eval.metrics import (
+    compute_f1,
+    compute_precision,
+    compute_recall,
+)
 from anomsmith.workflows.pca_pm import track_mahalanobis_distance
-from anomsmith.workflows.asset_health import assess_asset_health
 from anomsmith.workflows.survival import predict_rul_from_survival
 
 
@@ -36,7 +40,9 @@ class TestPCADelegatesScoringToPrimitive:
         det = PCADetector(n_components=2, score_method="reconstruction")
         det.fit(np.random.default_rng(1).standard_normal((30, 2)))
         with pytest.raises(ValueError, match="score_method='mahalanobis'"):
-            track_mahalanobis_distance(np.random.default_rng(1).standard_normal((5, 2)), det)
+            track_mahalanobis_distance(
+                np.random.default_rng(1).standard_normal((5, 2)), det
+            )
 
 
 class TestSweepThresholdsUsesMetricsModule:

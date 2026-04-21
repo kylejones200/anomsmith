@@ -2,11 +2,9 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from anomsmith import RobustZScoreScorer, detect_anomalies, score_anomalies
 from anomsmith.primitives.detectors.change_point import ChangePointDetector
-from anomsmith.primitives.scorers.robust_zscore import RobustZScoreScorer
 from anomsmith.primitives.thresholding import ThresholdRule
 from anomsmith.workflows.detect import sweep_thresholds
 

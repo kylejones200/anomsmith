@@ -4,24 +4,22 @@ Provides serialization/deserialization of anomsmith models for deployment
 to cloud platforms like AWS SageMaker, Azure ML, or GCP Vertex AI.
 """
 
+import importlib.util
 import json
 import logging
 import pickle
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
-import numpy as np
-import pandas as pd
-
-from anomsmith.primitives.base import BaseDetector, BaseEstimator, BaseScorer
+from anomsmith.primitives.base import BaseEstimator
 
 logger = logging.getLogger(__name__)
 
 
 def save_model(
     model: BaseEstimator,
-    path: Union[str, Path],
-    metadata: Optional[dict[str, Any]] = None,
+    path: str | Path,
+    metadata: dict[str, Any] | None = None,
 ) -> None:
     """Save an anomsmith model to disk for deployment.
 
@@ -74,7 +72,7 @@ def save_model(
     logger.info(f"Saved model to {path}")
 
 
-def load_model(path: Union[str, Path]) -> BaseEstimator:
+def load_model(path: str | Path) -> BaseEstimator:
     """Load an anomsmith model from disk.
 
     .. warning::
@@ -111,7 +109,7 @@ def load_model(path: Union[str, Path]) -> BaseEstimator:
     return model
 
 
-def get_model_metadata(path: Union[str, Path]) -> dict[str, Any]:
+def get_model_metadata(path: str | Path) -> dict[str, Any]:
     """Get metadata for a saved model without loading it.
 
     Args:
@@ -129,7 +127,7 @@ def get_model_metadata(path: Union[str, Path]) -> dict[str, Any]:
     if not metadata_path.exists():
         raise FileNotFoundError(f"Metadata file not found: {metadata_path}")
 
-    with open(metadata_path, "r") as f:
+    with open(metadata_path) as f:
         metadata = json.load(f)
 
     return metadata
@@ -138,8 +136,8 @@ def get_model_metadata(path: Union[str, Path]) -> dict[str, Any]:
 def export_model_for_sagemaker(
     model: BaseEstimator,
     s3_path: str,
-    metadata: Optional[dict[str, Any]] = None,
-    local_path: Optional[Union[str, Path]] = None,
+    metadata: dict[str, Any] | None = None,
+    local_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Export model in format ready for AWS SageMaker deployment.
 
@@ -206,7 +204,6 @@ def export_model_for_sagemaker(
 def _generate_sagemaker_inference_code(model: BaseEstimator) -> str:
     """Generate SageMaker inference code template for the model."""
     model_class = model.__class__.__name__
-    model_module = model.__class__.__module__
 
     code = f'''"""
 SageMaker inference script for {model_class}.
@@ -224,7 +221,7 @@ import pandas as pd
 
 def model_fn(model_dir: str):
     """Load model from disk.
-    
+
     SageMaker calls this function to load the model when the endpoint starts.
     """
     model_path = os.path.join(model_dir, "model.pkl")
@@ -235,12 +232,12 @@ def model_fn(model_dir: str):
 
 def input_fn(request_body: str, request_content_type: str):
     """Parse input data.
-    
+
     SageMaker calls this function to parse incoming requests.
     """
     if request_content_type == "application/json":
         data = json.loads(request_body)
-        
+
         # Expect format: {{"instances": [[...], [...]]}}
         if "instances" in data:
             return np.array(data["instances"])
@@ -259,7 +256,7 @@ def input_fn(request_body: str, request_content_type: str):
 
 def predict_fn(input_data, model):
     """Generate predictions.
-    
+
     SageMaker calls this function to make predictions.
     """
     # Convert to pandas Series if needed for SeriesLike compatibility
@@ -276,7 +273,7 @@ def predict_fn(input_data, model):
             return np.array(results)
     else:
         input_series = input_data
-    
+
     # Score the input
     if hasattr(model, "score"):
         score_view = model.score(input_series)
@@ -286,13 +283,13 @@ def predict_fn(input_data, model):
         scores = label_view.labels.astype(float)
     else:
         raise ValueError(f"Model {{model.__class__.__name__}} has no score or predict method")
-    
+
     return scores
 
 
 def output_fn(prediction, content_type: str):
     """Format output.
-    
+
     SageMaker calls this function to format the response.
     """
     if content_type == "application/json":
@@ -323,12 +320,7 @@ def _generate_requirements(model: BaseEstimator) -> list[str]:
     if "drift" in model_module.lower() or "arima" in model_module.lower():
         requirements.append("statsmodels>=0.13.0")
 
-    # Check for timesmith dependency
-    try:
-        import timesmith
-
+    if importlib.util.find_spec("timesmith") is not None:
         requirements.append("timesmith>=0.1.0,<1.0.0")
-    except ImportError:
-        pass
 
     return sorted(set(requirements))

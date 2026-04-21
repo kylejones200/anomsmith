@@ -5,8 +5,8 @@ Azure Monitor, or GCP Cloud Monitoring.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Any, Optional, Union
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,6 @@ from anomsmith.constants import (
     DEFAULT_DRIFT_DETECTION_STDDEV_THRESHOLD,
     DEFAULT_MODEL_METRIC_DEGRADATION_THRESHOLD,
 )
-from anomsmith.objects.views import LabelView, ScoreView
 from anomsmith.workflows.eval.metrics import (
     average_run_length,
     compute_f1,
@@ -33,9 +32,9 @@ logger = logging.getLogger(__name__)
 
 
 def compute_performance_metrics(
-    true_labels: Union[np.ndarray, pd.Series],
-    predicted_labels: Union[np.ndarray, pd.Series],
-    scores: Optional[Union[np.ndarray, pd.Series]] = None,
+    true_labels: np.ndarray | pd.Series,
+    predicted_labels: np.ndarray | pd.Series,
+    scores: np.ndarray | pd.Series | None = None,
 ) -> dict[str, float]:
     """Compute comprehensive performance metrics for model monitoring.
 
@@ -122,8 +121,8 @@ def compute_performance_metrics(
 
 
 def detect_concept_drift(
-    recent_scores: Union[np.ndarray, pd.Series],
-    historical_scores: Union[np.ndarray, pd.Series],
+    recent_scores: np.ndarray | pd.Series,
+    historical_scores: np.ndarray | pd.Series,
     threshold: float = DEFAULT_DRIFT_DETECTION_STDDEV_THRESHOLD,
 ) -> dict[str, Any]:
     """Detect concept drift in model scores.
@@ -201,8 +200,8 @@ def detect_concept_drift(
 def aggregate_metrics_for_cloudwatch(
     metrics_list: list[dict[str, float]],
     namespace: str = "AnomalyDetection",
-    model_name: Optional[str] = None,
-    timestamp: Optional[datetime] = None,
+    model_name: str | None = None,
+    timestamp: datetime | None = None,
 ) -> list[dict[str, Any]]:
     """Format metrics for AWS CloudWatch PutMetricData API.
 
@@ -226,7 +225,7 @@ def aggregate_metrics_for_cloudwatch(
         ... )
     """
     if timestamp is None:
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
 
     cloudwatch_metrics = []
 
@@ -290,9 +289,7 @@ class ModelPerformanceTracker:
         metrics_history: DataFrame with historical metrics
     """
 
-    def __init__(
-        self, window_size: int = 1000, model_name: Optional[str] = None
-    ) -> None:
+    def __init__(self, window_size: int = 1000, model_name: str | None = None) -> None:
         """Initialize performance tracker.
 
         Args:
@@ -309,10 +306,10 @@ class ModelPerformanceTracker:
 
     def update(
         self,
-        scores: Union[np.ndarray, pd.Series],
-        predicted_labels: Union[np.ndarray, pd.Series],
-        true_labels: Optional[Union[np.ndarray, pd.Series]] = None,
-        timestamp: Optional[datetime] = None,
+        scores: np.ndarray | pd.Series,
+        predicted_labels: np.ndarray | pd.Series,
+        true_labels: np.ndarray | pd.Series | None = None,
+        timestamp: datetime | None = None,
     ) -> dict[str, float]:
         """Update tracker with new predictions.
 
@@ -326,7 +323,7 @@ class ModelPerformanceTracker:
             Current performance metrics
         """
         if timestamp is None:
-            timestamp = datetime.now(timezone.utc)
+            timestamp = datetime.now(UTC)
 
         # Convert to arrays
         if isinstance(scores, pd.Series):

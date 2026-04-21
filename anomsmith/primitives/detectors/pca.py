@@ -7,7 +7,7 @@ Anomalies are detected using either:
 """
 
 import logging
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -53,12 +53,12 @@ class PCADetector(BaseDetector):
 
     def __init__(
         self,
-        n_components: Union[float, int] = DEFAULT_PCA_VARIANCE_FRACTION,
+        n_components: float | int = DEFAULT_PCA_VARIANCE_FRACTION,
         score_method: Literal[
             "reconstruction", "mahalanobis", "both"
         ] = "reconstruction",
         contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         self.n_components = n_components
         self.score_method = score_method

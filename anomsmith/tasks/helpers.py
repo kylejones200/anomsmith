@@ -1,14 +1,10 @@
 """Helpers for converting inputs into timesmith-compatible types."""
 
-from typing import Union
-
 import numpy as np
 import pandas as pd
-
 from timesmith.typing import PanelLike, SeriesLike
 
 from anomsmith.objects.validate import (
-    assert_monotonic_index,
     assert_panel,
     assert_series,
 )
@@ -18,7 +14,7 @@ SeriesView = SeriesLike
 PanelView = PanelLike
 
 
-def make_series_view(y: Union[pd.Series, np.ndarray, SeriesLike]) -> SeriesLike:
+def make_series_view(y: pd.Series | np.ndarray | SeriesLike) -> SeriesLike:
     """Convert pandas Series or numpy array into timesmith SeriesLike.
 
     Args:
@@ -55,7 +51,7 @@ def make_series_view(y: Union[pd.Series, np.ndarray, SeriesLike]) -> SeriesLike:
 
 
 def make_panel_view(
-    y: Union[pd.DataFrame, np.ndarray, PanelLike],
+    y: pd.DataFrame | np.ndarray | PanelLike,
     entity_key: pd.Index | None = None,
     time_index: pd.Index | None = None,
 ) -> PanelLike:

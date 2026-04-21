@@ -5,7 +5,7 @@ policy framework for comprehensive predictive maintenance.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -15,13 +15,11 @@ from anomsmith.constants import (
     DEFAULT_RUL_WARNING_THRESHOLD,
     DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF,
 )
-from anomsmith.objects.health_state import HealthState, HealthStateView
+from anomsmith.objects.health_state import HealthStateView
 from anomsmith.primitives.survival.cox import CoxSurvivalModel
 from anomsmith.workflows.eval.survival_metrics import (
-    compute_concordance_index,
     evaluate_survival_model,
 )
-from anomsmith.workflows.pm import discretize_rul
 
 if TYPE_CHECKING:
     try:
@@ -34,9 +32,9 @@ logger = logging.getLogger(__name__)
 
 def predict_rul_from_survival(
     model: CoxSurvivalModel,
-    X: Union[np.ndarray, pd.DataFrame],
+    X: np.ndarray | pd.DataFrame,
     threshold: float = DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF,
-    index: Optional[pd.Index] = None,
+    index: pd.Index | None = None,
 ) -> pd.Series:
     """Predict Remaining Useful Life (RUL) from survival model.
 
@@ -71,7 +69,7 @@ def predict_rul_from_survival(
 
 def predict_health_states_from_survival(
     model: CoxSurvivalModel,
-    X: Union[np.ndarray, pd.DataFrame],
+    X: np.ndarray | pd.DataFrame,
     healthy_threshold: float = DEFAULT_RUL_HEALTHY_THRESHOLD,
     warning_threshold: float = DEFAULT_RUL_WARNING_THRESHOLD,
     threshold: float = DEFAULT_SURVIVAL_PROBABILITY_AT_MEDIAN_TTF,
@@ -118,9 +116,9 @@ def predict_health_states_from_survival(
 
 
 def fit_survival_model_for_maintenance(
-    X: Union[np.ndarray, pd.DataFrame],
-    durations: Union[np.ndarray, pd.Series],
-    events: Union[np.ndarray, pd.Series, None] = None,
+    X: np.ndarray | pd.DataFrame,
+    durations: np.ndarray | pd.Series,
+    events: np.ndarray | pd.Series | None = None,
     model_type: str = "logistic_hazard",
     **model_kwargs,
 ) -> CoxSurvivalModel:
@@ -188,9 +186,9 @@ def fit_survival_model_for_maintenance(
 
 def compare_survival_models(
     models: dict[str, CoxSurvivalModel],
-    X_test: Union[np.ndarray, pd.DataFrame],
-    durations_test: Union[np.ndarray, pd.Series],
-    events_test: Union[np.ndarray, pd.Series, None] = None,
+    X_test: np.ndarray | pd.DataFrame,
+    durations_test: np.ndarray | pd.Series,
+    events_test: np.ndarray | pd.Series | None = None,
 ) -> pd.DataFrame:
     """Compare multiple survival models.
 

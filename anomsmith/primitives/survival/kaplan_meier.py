@@ -5,7 +5,7 @@ over time without assuming any particular distribution.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -46,7 +46,7 @@ class KaplanMeierModel(CoxSurvivalModel):
     def __init__(
         self,
         alpha: float = DEFAULT_CONFIDENCE_ALPHA,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize Kaplan-Meier model."""
         if not LIFELINES_AVAILABLE:
@@ -57,15 +57,15 @@ class KaplanMeierModel(CoxSurvivalModel):
 
         super().__init__(random_state=random_state)
         self.alpha = alpha
-        self.model_: Optional[KaplanMeierFitter] = None  # type: ignore
-        self.durations_: Optional[np.ndarray] = None
-        self.events_: Optional[np.ndarray] = None
+        self.model_: KaplanMeierFitter | None = None  # type: ignore
+        self.durations_: np.ndarray | None = None
+        self.events_: np.ndarray | None = None
 
     def fit(
         self,
-        X: Union[np.ndarray, pd.DataFrame, None],
-        durations: Union[np.ndarray, pd.Series],
-        events: Union[np.ndarray, pd.Series, None] = None,
+        X: np.ndarray | pd.DataFrame | None,
+        durations: np.ndarray | pd.Series,
+        events: np.ndarray | pd.Series | None = None,
         y: Union[np.ndarray, pd.Series, "SeriesLike", None] = None,
     ) -> "KaplanMeierModel":
         """Fit the Kaplan-Meier model.
@@ -104,8 +104,8 @@ class KaplanMeierModel(CoxSurvivalModel):
 
     def predict_survival_function(
         self,
-        X: Union[np.ndarray, pd.DataFrame, None] = None,
-        time_points: Optional[np.ndarray] = None,
+        X: np.ndarray | pd.DataFrame | None = None,
+        time_points: np.ndarray | None = None,
     ) -> pd.DataFrame:
         """Predict survival function S(t).
 
@@ -148,7 +148,7 @@ class KaplanMeierModel(CoxSurvivalModel):
         return pd.DataFrame(surv_matrix, index=time_index, columns=range(n_samples))
 
     def predict_risk_score(
-        self, X: Union[np.ndarray, pd.DataFrame, None] = None
+        self, X: np.ndarray | pd.DataFrame | None = None
     ) -> np.ndarray:
         """Predict risk scores.
 
@@ -176,8 +176,8 @@ class KaplanMeierModel(CoxSurvivalModel):
         return np.full(n_samples, -median_survival)
 
     def predict(
-        self, time_points: Union[float, int, np.ndarray, pd.Series]
-    ) -> Union[float, np.ndarray]:
+        self, time_points: float | int | np.ndarray | pd.Series
+    ) -> float | np.ndarray:
         """Predict survival probability at specific time points.
 
         This is the main prediction method for Kaplan-Meier.

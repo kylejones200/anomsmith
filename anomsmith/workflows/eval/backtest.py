@@ -1,7 +1,7 @@
 """Backtesting utilities for anomaly detection."""
 
 import logging
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -67,7 +67,7 @@ class ExpandingWindowSplit:
         # Vectorized cutoff generation
         step = (n - self.min_train_size) // self.n_splits
         indices = np.arange(self.n_splits)
-        train_ends = self.min_train_size + indices * step
+        train_ends: np.ndarray = self.min_train_size + indices * step
         # Convert to list of tuples as expected by consumers
         cutoffs = [(int(te), int(te)) for te in train_ends]
 
@@ -158,10 +158,10 @@ def backtest_detector(
     # Pre-allocate arrays for results (faster than list.append())
     n_splits_actual = len(cutoffs)
     folds = np.arange(n_splits_actual)
-    precisions = np.full(n_splits_actual, np.nan, dtype=float)
-    recalls = np.full(n_splits_actual, np.nan, dtype=float)
-    f1s = np.full(n_splits_actual, np.nan, dtype=float)
-    avg_run_lengths = np.full(n_splits_actual, np.nan, dtype=float)
+    precisions: np.ndarray = np.full(n_splits_actual, np.nan, dtype=float)
+    recalls: np.ndarray = np.full(n_splits_actual, np.nan, dtype=float)
+    f1s: np.ndarray = np.full(n_splits_actual, np.nan, dtype=float)
+    avg_run_lengths: np.ndarray = np.full(n_splits_actual, np.nan, dtype=float)
 
     for fold, (train_end, test_start) in enumerate(cutoffs):
         # Split data

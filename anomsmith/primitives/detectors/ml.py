@@ -5,7 +5,6 @@ sklearn is allowed in Layer 2 as it's a core ML library.
 """
 
 import logging
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -47,7 +46,7 @@ class IsolationForestDetector(BaseDetector):
         self,
         contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
         n_estimators: int = DEFAULT_ISOLATION_FOREST_N_ESTIMATORS,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
         n_jobs: int = -1,
     ) -> None:
         self.contamination = contamination
@@ -66,8 +65,8 @@ class IsolationForestDetector(BaseDetector):
 
     def fit(
         self,
-        y: Union[np.ndarray, pd.Series],
-        X: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+        y: np.ndarray | pd.Series,
+        X: np.ndarray | pd.DataFrame | None = None,
     ) -> "IsolationForestDetector":
         """Fit the Isolation Forest detector.
 
@@ -93,7 +92,7 @@ class IsolationForestDetector(BaseDetector):
         logger.debug("Fitted IsolationForestDetector")
         return self
 
-    def predict(self, y: Union[np.ndarray, pd.Series]) -> LabelView:
+    def predict(self, y: np.ndarray | pd.Series) -> LabelView:
         """Predict anomaly labels.
 
         Args:
@@ -115,7 +114,7 @@ class IsolationForestDetector(BaseDetector):
 
         return LabelView(index=index, labels=labels)
 
-    def score(self, y: Union[np.ndarray, pd.Series]) -> ScoreView:
+    def score(self, y: np.ndarray | pd.Series) -> ScoreView:
         """Score anomalies.
 
         Args:
@@ -153,7 +152,7 @@ class LOFDetector(BaseDetector):
         self,
         contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
         n_neighbors: int = DEFAULT_LOF_N_NEIGHBORS,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
         n_jobs: int = -1,
     ) -> None:
         self.contamination = contamination
@@ -172,8 +171,8 @@ class LOFDetector(BaseDetector):
 
     def fit(
         self,
-        y: Union[np.ndarray, pd.Series],
-        X: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+        y: np.ndarray | pd.Series,
+        X: np.ndarray | pd.DataFrame | None = None,
     ) -> "LOFDetector":
         """Fit the LOF detector.
 
@@ -200,7 +199,7 @@ class LOFDetector(BaseDetector):
         logger.debug("Fitted LOFDetector")
         return self
 
-    def predict(self, y: Union[np.ndarray, pd.Series]) -> LabelView:
+    def predict(self, y: np.ndarray | pd.Series) -> LabelView:
         """Predict anomaly labels.
 
         Args:
@@ -222,7 +221,7 @@ class LOFDetector(BaseDetector):
 
         return LabelView(index=index, labels=labels)
 
-    def score(self, y: Union[np.ndarray, pd.Series]) -> ScoreView:
+    def score(self, y: np.ndarray | pd.Series) -> ScoreView:
         """Score anomalies.
 
         Uses score_samples() method from fitted LOF model with novelty=True
@@ -265,7 +264,7 @@ class RobustCovarianceDetector(BaseDetector):
         self,
         contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
         support_fraction: float = DEFAULT_ELLIPTIC_ENVELOPE_SUPPORT_FRACTION,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
     ) -> None:
         self.contamination = contamination
         self.support_fraction = support_fraction
@@ -281,8 +280,8 @@ class RobustCovarianceDetector(BaseDetector):
 
     def fit(
         self,
-        y: Union[np.ndarray, pd.Series],
-        X: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+        y: np.ndarray | pd.Series,
+        X: np.ndarray | pd.DataFrame | None = None,
     ) -> "RobustCovarianceDetector":
         """Fit the Robust Covariance detector.
 
@@ -307,7 +306,7 @@ class RobustCovarianceDetector(BaseDetector):
         logger.debug("Fitted RobustCovarianceDetector")
         return self
 
-    def predict(self, y: Union[np.ndarray, pd.Series]) -> LabelView:
+    def predict(self, y: np.ndarray | pd.Series) -> LabelView:
         """Predict anomaly labels.
 
         Args:
@@ -329,7 +328,7 @@ class RobustCovarianceDetector(BaseDetector):
 
         return LabelView(index=index, labels=labels)
 
-    def score(self, y: Union[np.ndarray, pd.Series]) -> ScoreView:
+    def score(self, y: np.ndarray | pd.Series) -> ScoreView:
         """Score anomalies.
 
         Args:

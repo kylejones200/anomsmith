@@ -5,7 +5,7 @@ equipment health and classify health states (healthy, warning, critical).
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 
 def track_mahalanobis_distance(
-    X: Union[np.ndarray, pd.DataFrame],
+    X: np.ndarray | pd.DataFrame,
     detector: PCADetector,
-    index: Optional[pd.Index] = None,
+    index: pd.Index | None = None,
 ) -> pd.Series:
     """Track Mahalanobis distance over time as a single metric.
 
@@ -69,7 +69,9 @@ def track_mahalanobis_distance(
         X_arr = X.values
     else:
         X_arr = np.asarray(X)
-        out_index = index if index is not None else pd.RangeIndex(start=0, stop=len(X_arr))
+        out_index = (
+            index if index is not None else pd.RangeIndex(start=0, stop=len(X_arr))
+        )
 
     score_view = detector.score(X_arr)
     distances = score_view.scores
@@ -85,7 +87,7 @@ def classify_health_from_distance(
     distances: Union[pd.Series, np.ndarray, "SeriesLike"],
     healthy_threshold: float,
     warning_threshold: float,
-    index: Optional[pd.Index] = None,
+    index: pd.Index | None = None,
 ) -> HealthStateView:
     """Classify health states from Mahalanobis distance thresholds.
 
@@ -131,7 +133,7 @@ def classify_health_from_distance(
             index = pd.RangeIndex(start=0, stop=len(dist_values))
 
     # Classify health states based on distance thresholds - vectorized
-    states = np.zeros(len(dist_values), dtype=int)
+    states: np.ndarray = np.zeros(len(dist_values), dtype=int)
     states[(dist_values > healthy_threshold) & (dist_values <= warning_threshold)] = (
         HealthState.WARNING.value
     )
@@ -147,11 +149,11 @@ def classify_health_from_distance(
 
 
 def assess_health_with_pca(
-    X: Union[np.ndarray, pd.DataFrame],
+    X: np.ndarray | pd.DataFrame,
     detector: PCADetector,
     healthy_threshold: float,
     warning_threshold: float,
-    index: Optional[pd.Index] = None,
+    index: pd.Index | None = None,
 ) -> pd.DataFrame:
     """Assess equipment health using PCA and Mahalanobis distance.
 
@@ -209,7 +211,7 @@ def assess_health_with_pca(
 
 
 def compute_pca_health_thresholds(
-    X_train: Union[np.ndarray, pd.DataFrame],
+    X_train: np.ndarray | pd.DataFrame,
     detector: PCADetector,
     healthy_percentile: float = DEFAULT_PCA_HEALTHY_DISTANCE_PERCENTILE,
     warning_percentile: float = DEFAULT_PCA_WARNING_DISTANCE_PERCENTILE,

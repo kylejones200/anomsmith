@@ -5,7 +5,7 @@ from multiple models.
 """
 
 import logging
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ except ImportError:
     SKLEARN_AVAILABLE = False
     LogisticRegression = None  # type: ignore
 
-from anomsmith.objects.health_state import HealthState, HealthStateView
+from anomsmith.objects.health_state import HealthStateView
 from anomsmith.primitives.base import BaseEstimator
 
 if TYPE_CHECKING:
@@ -43,8 +43,8 @@ class AveragingOrdinalEnsemble(BaseEstimator):
 
     def __init__(
         self,
-        models: List[BaseEstimator],
-        random_state: Optional[int] = None,
+        models: list[BaseEstimator],
+        random_state: int | None = None,
     ) -> None:
         """Initialize averaging ensemble."""
         if not models:
@@ -58,7 +58,7 @@ class AveragingOrdinalEnsemble(BaseEstimator):
     def fit(
         self,
         y: Union[np.ndarray, pd.Series, "SeriesLike"],
-        X: Union[np.ndarray, pd.DataFrame],
+        X: np.ndarray | pd.DataFrame,
     ) -> "AveragingOrdinalEnsemble":
         """Fit method for compatibility (models should be pre-fitted).
 
@@ -80,7 +80,7 @@ class AveragingOrdinalEnsemble(BaseEstimator):
         logger.debug(f"AveragingOrdinalEnsemble: {len(self.models)} models")
         return self
 
-    def predict(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict health states by averaging model predictions.
 
         Args:
@@ -139,7 +139,7 @@ class AveragingOrdinalEnsemble(BaseEstimator):
         return predictions
 
     def predict_health_states(
-        self, X: Union[np.ndarray, pd.DataFrame], index: Optional[pd.Index] = None
+        self, X: np.ndarray | pd.DataFrame, index: pd.Index | None = None
     ) -> HealthStateView:
         """Predict health states as HealthStateView.
 
@@ -174,9 +174,9 @@ class StackedOrdinalEnsemble(BaseEstimator):
 
     def __init__(
         self,
-        base_models: List[BaseEstimator],
-        meta_model: Optional[BaseEstimator] = None,
-        random_state: Optional[int] = None,
+        base_models: list[BaseEstimator],
+        meta_model: BaseEstimator | None = None,
+        random_state: int | None = None,
     ) -> None:
         """Initialize stacked ensemble."""
         if not base_models:
@@ -203,7 +203,7 @@ class StackedOrdinalEnsemble(BaseEstimator):
     def fit(
         self,
         y: Union[np.ndarray, pd.Series, "SeriesLike"],
-        X: Union[np.ndarray, pd.DataFrame],
+        X: np.ndarray | pd.DataFrame,
     ) -> "StackedOrdinalEnsemble":
         """Fit the stacked ensemble.
 
@@ -245,7 +245,7 @@ class StackedOrdinalEnsemble(BaseEstimator):
         )
         return self
 
-    def predict(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict health states using stacked ensemble.
 
         Args:
@@ -305,7 +305,7 @@ class StackedOrdinalEnsemble(BaseEstimator):
         return predictions
 
     def predict_health_states(
-        self, X: Union[np.ndarray, pd.DataFrame], index: Optional[pd.Index] = None
+        self, X: np.ndarray | pd.DataFrame, index: pd.Index | None = None
     ) -> HealthStateView:
         """Predict health states as HealthStateView.
 

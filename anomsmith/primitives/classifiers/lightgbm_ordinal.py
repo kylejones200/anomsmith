@@ -5,7 +5,7 @@ and clips to valid health state values. Handles nonlinearities and sharp thresho
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -54,7 +54,7 @@ class LightGBMOrdinalClassifier(BaseEstimator):
         n_estimators: int = DEFAULT_LIGHTGBM_N_ESTIMATORS,
         learning_rate: float = DEFAULT_LIGHTGBM_LEARNING_RATE,
         max_depth: int = -1,
-        random_state: Optional[int] = None,
+        random_state: int | None = None,
         verbosity: int = -1,
         **kwargs,
     ) -> None:
@@ -79,13 +79,13 @@ class LightGBMOrdinalClassifier(BaseEstimator):
         self.random_state = random_state
         self.verbosity = verbosity
         self.kwargs = kwargs
-        self.model_: Optional[lgb.Booster] = None  # type: ignore
+        self.model_: lgb.Booster | None = None  # type: ignore
         self._fitted = False
 
     def fit(
         self,
         y: Union[np.ndarray, pd.Series, "SeriesLike"],
-        X: Union[np.ndarray, pd.DataFrame, None] = None,
+        X: np.ndarray | pd.DataFrame | None = None,
     ) -> "LightGBMOrdinalClassifier":
         """Fit the LightGBM ordinal regressor.
 
@@ -148,7 +148,7 @@ class LightGBMOrdinalClassifier(BaseEstimator):
         )
         return self
 
-    def predict(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict health states.
 
         Args:
@@ -169,7 +169,7 @@ class LightGBMOrdinalClassifier(BaseEstimator):
         predictions = np.round(predictions).clip(0, 2).astype(int)
         return predictions
 
-    def predict_proba(self, X: Union[np.ndarray, pd.DataFrame]) -> np.ndarray:
+    def predict_proba(self, X: np.ndarray | pd.DataFrame) -> np.ndarray:
         """Predict health state probabilities (approximated from regression).
 
         Converts continuous regression predictions to ordinal probabilities
@@ -193,7 +193,9 @@ class LightGBMOrdinalClassifier(BaseEstimator):
         continuous_preds = continuous_preds.reshape(-1, 1)  # Shape: (n_samples, 1)
 
         # Vectorized: compute distance from each class for all samples
-        class_centers = np.arange(3, dtype=float).reshape(1, -1)  # Shape: (1, 3)
+        class_centers: np.ndarray = np.arange(3, dtype=float).reshape(
+            1, -1
+        )  # Shape: (1, 3)
         distances = np.abs(continuous_preds - class_centers)  # Shape: (n_samples, 3)
 
         # Softmax-like probabilities (closer = higher probability)
@@ -203,7 +205,7 @@ class LightGBMOrdinalClassifier(BaseEstimator):
         return proba
 
     def predict_health_states(
-        self, X: Union[np.ndarray, pd.DataFrame], index: Optional[pd.Index] = None
+        self, X: np.ndarray | pd.DataFrame, index: pd.Index | None = None
     ) -> HealthStateView:
         """Predict health states as HealthStateView.
 

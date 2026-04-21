@@ -8,8 +8,8 @@ from anomsmith.primitives.classifiers.sequence import (
 
 try:
     from anomsmith.primitives.classifiers.lstm import (
-        LSTMDistressClassifier,
         AttentionLSTMDistressClassifier,
+        LSTMDistressClassifier,
     )
 
     _TENSORFLOW_AVAILABLE = True
