@@ -39,3 +39,6 @@ Migration from ``anomaly_detection_toolkit``
 * ``prepare_pm_features(..., add_degradation_rates=...)`` was renamed to
   ``include_degradation_rates=...`` to avoid shadowing the ``add_degradation_rates``
   function inside that helper.
+
+The standalone **asset_health** / **anomaly_detection_toolkit** repository is **no
+longer required** for any documented capability; see :doc:`migration_from_anomaly_detection_toolkit`.

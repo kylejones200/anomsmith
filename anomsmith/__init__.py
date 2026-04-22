@@ -25,15 +25,24 @@ from anomsmith.platform import (
     prepare_pm_features,
 )
 from anomsmith.primitives.base import BaseDetector, BaseScorer
+from anomsmith.primitives.detectors.autoencoders import (
+    LSTMAutoencoderDetector,
+    PyTorchAutoencoderDetector,
+)
 from anomsmith.primitives.detectors.drift import ARIMADriftDetector
-from anomsmith.primitives.detectors.ensemble import VotingEnsembleDetector
+from anomsmith.primitives.detectors.ensemble import (
+    EnsembleDetector,
+    ScoreCombiningEnsembleDetector,
+    VotingEnsemble,
+    VotingEnsembleDetector,
+)
 from anomsmith.primitives.detectors.ml import (
     IsolationForestDetector,
     LOFDetector,
     RobustCovarianceDetector,
 )
 from anomsmith.primitives.detectors.pca import PCADetector
-from anomsmith.primitives.detectors.wavelet import WaveletDetector
+from anomsmith.primitives.detectors.wavelet import WaveletDenoiser, WaveletDetector
 from anomsmith.primitives.scorers.robust_zscore import RobustZScoreScorer
 from anomsmith.primitives.scorers.seasonal import SeasonalBaselineScorer
 from anomsmith.primitives.scorers.statistical import IQRScorer, ZScoreScorer
@@ -106,6 +115,12 @@ _BASE_EXPORTS = [
     "WaveletDetector",
     "ARIMADriftDetector",
     "VotingEnsembleDetector",
+    "VotingEnsemble",
+    "ScoreCombiningEnsembleDetector",
+    "EnsembleDetector",
+    "WaveletDenoiser",
+    "LSTMAutoencoderDetector",
+    "PyTorchAutoencoderDetector",
     # Platform (merged Anomaly Detection Toolkit PM stack)
     "FeatureExtractor",
     "RULEstimator",

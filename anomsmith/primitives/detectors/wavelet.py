@@ -30,6 +30,40 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class WaveletDenoiser:
+    """Wavelet soft/hard thresholding denoising (requires PyWavelets).
+
+    Useful as a preprocessing step before scoring or for visualization. This is **not**
+    a :class:`~anomsmith.primitives.base.BaseDetector`; it only returns a denoised array.
+    """
+
+    def __init__(
+        self,
+        wavelet: str = "db4",
+        threshold_mode: str = "soft",
+        level: int = 5,
+    ) -> None:
+        if pywt is None:
+            raise ImportError(
+                "PyWavelets is required for WaveletDenoiser. "
+                "Install with: pip install 'anomsmith[wavelet]'"
+            )
+        self.wavelet = wavelet
+        self.threshold_mode = threshold_mode
+        self.level = level
+
+    def denoise(self, data: np.ndarray) -> np.ndarray:
+        """Denoise a 1D signal in-place safe manner."""
+        coeffs = pywt.wavedec(data, self.wavelet, level=self.level)
+        sigma = float(np.median(np.abs(coeffs[-1])) / 0.6745)
+        threshold = sigma * np.sqrt(2 * np.log(len(data)))
+        coeffs_thresh = [coeffs[0]]
+        for c in coeffs[1:]:
+            coeffs_thresh.append(pywt.threshold(c, threshold, mode=self.threshold_mode))
+        denoised = pywt.waverec(coeffs_thresh, self.wavelet)
+        return denoised[: len(data)]
+
+
 class WaveletDetector(BaseDetector):
     """Wavelet-based anomaly detector for time series.
 

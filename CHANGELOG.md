@@ -12,6 +12,10 @@ All notable changes to this project will be documented in this file.
   primitives plus PM orchestration; optional anomaly hooks use
   ``anomsmith.primitives.base.BaseDetector`` only.
 - Documentation: :doc:`platform`.
+- **Toolkit parity (retire ``asset_health``)**: ``LSTMAutoencoderDetector``,
+  ``PyTorchAutoencoderDetector``, ``WaveletDenoiser``, score-combining
+  ``EnsembleDetector`` / ``ScoreCombiningEnsembleDetector``, and ``VotingEnsemble``
+  alias; see :doc:`migration_from_anomaly_detection_toolkit`.
 
 ### Breaking Changes
 
