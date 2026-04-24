@@ -25,6 +25,66 @@ from anomsmith.primitives.thresholding import ThresholdRule, apply_threshold
 logger = logging.getLogger(__name__)
 
 
+def _numeric_feature_columns(features: pd.DataFrame) -> list[str]:
+    return [
+        c
+        for c in features.columns
+        if pd.api.types.is_numeric_dtype(features[c])
+    ]
+
+
+def _detect_with_isolation_forest(
+    features: pd.DataFrame,
+    threshold_rule: ThresholdRule,
+    *,
+    feature_cols: list[str] | None,
+    contamination: float,
+    n_estimators: int,
+    random_state: int | None,
+    min_rows: int,
+    too_few_message: str,
+    log_action: str,
+) -> pd.DataFrame:
+    """Fit isolation forest on numeric rows and append score + flag columns."""
+    if len(features) < min_rows:
+        raise ValueError(too_few_message)
+
+    if feature_cols is None:
+        cols = _numeric_feature_columns(features)
+    else:
+        cols = list(feature_cols)
+    if not cols:
+        raise ValueError("No numeric feature columns to score.")
+
+    X = features[cols].to_numpy(dtype=np.float64)
+    if not np.isfinite(X).all():
+        raise ValueError("features contains non-finite values in feature_cols.")
+
+    det = IsolationForestDetector(
+        contamination=contamination,
+        n_estimators=n_estimators,
+        random_state=random_state,
+    )
+    det.fit(X)
+    if det.model_ is None or not hasattr(det, "scaler_"):
+        raise RuntimeError("IsolationForestDetector did not finish fitting.")
+
+    Xs = det.scaler_.transform(X)
+    raw = det.model_.decision_function(Xs)
+    scores = -np.asarray(raw, dtype=np.float64)
+    idx = features.index
+    score_view = ScoreView(index=idx, scores=scores)
+    label_view = apply_threshold(score_view, threshold_rule)
+
+    out = features.copy()
+    out["score"] = score_view.scores
+    out["flag"] = label_view.labels
+    logger.info(
+        "%s: %d rows, %d flagged", log_action, len(out), int(out["flag"].sum())
+    )
+    return out
+
+
 def aggregate_undirected_edges(
     communications: pd.DataFrame,
     *,
@@ -195,6 +255,135 @@ def node_features_from_edges(
     return out
 
 
+def edge_features_from_edges(
+    edges: pd.DataFrame,
+    nodes: pd.Index | list[Any] | np.ndarray,
+    *,
+    u_col: str = "u",
+    v_col: str = "v",
+    weight_col: str = "weight",
+) -> pd.DataFrame:
+    """Per-edge (dyad) features derived from aggregated undirected weights.
+
+    Rows follow the ``u``, ``v``, ``weight`` table from
+    :func:`aggregate_undirected_edges`. Combines each edge weight with endpoint
+    strengths from :func:`node_features_from_edges` to highlight unusually heavy
+    links relative to endpoint activity.
+
+    Columns:
+
+    - ``weight``: aggregated event count on the dyad.
+    - ``share_of_endpoint_volume``: ``2 * weight / (deg(u) + deg(v))`` using
+      endpoint ``weighted_degree`` values (each edge's weight is included in
+      both degrees).
+    - ``log1p_weight``: ``log1p(weight)`` for scale-robust modeling.
+
+    Args:
+        edges: Non-empty edge list (typically aggregated counts).
+        nodes: Full node roster (same semantics as :func:`node_features_from_edges`).
+        u_col, v_col, weight_col: Column names in ``edges``.
+
+    Returns:
+        DataFrame indexed by ``MultiIndex`` ``(u, v)`` with numeric feature columns.
+
+    Raises:
+        ValueError: If ``edges`` is empty.
+    """
+    if edges.empty:
+        raise ValueError("edge_features_from_edges requires a non-empty edges frame")
+
+    nf = node_features_from_edges(
+        edges, nodes, u_col=u_col, v_col=v_col, weight_col=weight_col
+    )
+    u = edges[u_col].to_numpy()
+    v = edges[v_col].to_numpy()
+    w = edges[weight_col].astype(float).to_numpy()
+    du = nf["weighted_degree"].reindex(u).to_numpy(dtype=np.float64)
+    dv = nf["weighted_degree"].reindex(v).to_numpy(dtype=np.float64)
+    denom = du + dv
+    share = np.where(denom > 0.0, (2.0 * w) / denom, 0.0)
+    logw = np.log1p(w)
+    idx = pd.MultiIndex.from_arrays([u, v], names=[u_col, v_col])
+    return pd.DataFrame(
+        {
+            "weight": w,
+            "share_of_endpoint_volume": share,
+            "log1p_weight": logw,
+        },
+        index=idx,
+    )
+
+
+def node_touch_counts_by_bin(
+    communications: pd.DataFrame,
+    nodes: pd.Index | list[Any] | np.ndarray,
+    *,
+    timestamp_col: str = "timestamp",
+    sender_col: str = "sender_id",
+    receiver_col: str = "receiver_id",
+    freq: str = "1D",
+    drop_self_loops: bool = True,
+) -> pd.DataFrame:
+    """Count how often each node sends or receives in each time bin.
+
+    Each communication row increments both the sender and the receiver for the
+    floored period bucket (pandas offset string, e.g. ``\"1D\"``, ``\"6H\"``).
+
+    Args:
+        communications: Must include timestamp and endpoint columns.
+        nodes: Full roster; bins include only these ids (other endpoints dropped).
+        timestamp_col: Parseable timestamps (``pd.to_datetime``).
+        sender_col, receiver_col: Endpoint identifiers.
+        freq: Bin size passed to ``Series.dt.floor``.
+        drop_self_loops: If True, rows with sender equal receiver are skipped.
+
+    Returns:
+        DataFrame with index = node id, columns = bin start (``datetime64``),
+        values = integer touch counts. Missing bins are zero; nodes with no
+        events still appear as rows of zeros when listed in ``nodes``.
+    """
+    if isinstance(nodes, np.ndarray):
+        node_index = pd.Index(nodes)
+    elif isinstance(nodes, list):
+        node_index = pd.Index(nodes)
+    else:
+        node_index = nodes
+    if node_index.duplicated().any():
+        raise ValueError("nodes must be unique")
+
+    required = {timestamp_col, sender_col, receiver_col}
+    missing = required - set(communications.columns)
+    if missing:
+        raise ValueError(f"communications is missing columns: {sorted(missing)}")
+
+    df = communications[list(required)].copy()
+    df[timestamp_col] = pd.to_datetime(df[timestamp_col], utc=False, errors="coerce")
+    df = df.dropna(subset=[timestamp_col, sender_col, receiver_col])
+    if drop_self_loops:
+        df = df[df[sender_col] != df[receiver_col]]
+
+    node_set = set(node_index.tolist())
+    if df.empty:
+        return pd.DataFrame(0.0, index=node_index.copy(), columns=[])
+
+    df["_bin"] = df[timestamp_col].dt.floor(freq)
+    part_s = df[["_bin", sender_col]].rename(columns={sender_col: "_node"})
+    part_r = df[["_bin", receiver_col]].rename(columns={receiver_col: "_node"})
+    long = pd.concat([part_s, part_r], ignore_index=True)
+    long = long[long["_node"].isin(node_set)]
+    if long.empty:
+        return pd.DataFrame(0.0, index=node_index.copy(), columns=[])
+
+    counts = long.groupby(["_bin", "_node"], observed=True).size()
+    wide = counts.unstack(level="_node", fill_value=0)
+    wide = wide.reindex(columns=node_index, fill_value=0)
+    mat = wide.T
+    mat = mat.sort_index(axis=0).sort_index(axis=1)
+    mat.index.name = None
+    mat.columns.name = None
+    return mat.astype(np.float64)
+
+
 def detect_network_node_anomalies(
     node_features: pd.DataFrame,
     threshold_rule: ThresholdRule,
@@ -227,47 +416,95 @@ def detect_network_node_anomalies(
         ValueError: If fewer than two rows are present (isolation forest requires
             a batch to score relative to).
     """
-    if len(node_features) < 2:
-        raise ValueError(
-            "detect_network_node_anomalies requires at least 2 nodes; "
-            f"got {len(node_features)}"
-        )
-
-    if feature_cols is None:
-        feature_cols = [
-            c
-            for c in node_features.columns
-            if pd.api.types.is_numeric_dtype(node_features[c])
-        ]
-    if not feature_cols:
-        raise ValueError("No numeric feature columns to score.")
-
-    X = node_features[feature_cols].to_numpy(dtype=np.float64)
-    if not np.isfinite(X).all():
-        raise ValueError("node_features contains non-finite values in feature_cols.")
-
-    det = IsolationForestDetector(
+    return _detect_with_isolation_forest(
+        node_features,
+        threshold_rule,
+        feature_cols=feature_cols,
         contamination=contamination,
         n_estimators=n_estimators,
         random_state=random_state,
+        min_rows=2,
+        too_few_message=(
+            "detect_network_node_anomalies requires at least 2 nodes; "
+            f"got {len(node_features)}"
+        ),
+        log_action="detect_network_node_anomalies",
     )
-    det.fit(X)
-    if det.model_ is None or not hasattr(det, "scaler_"):
-        raise RuntimeError("IsolationForestDetector did not finish fitting.")
 
-    Xs = det.scaler_.transform(X)
-    raw = det.model_.decision_function(Xs)
-    scores = -np.asarray(raw, dtype=np.float64)
-    idx = node_features.index
-    score_view = ScoreView(index=idx, scores=scores)
-    label_view = apply_threshold(score_view, threshold_rule)
 
-    out = node_features.copy()
-    out["score"] = score_view.scores
-    out["flag"] = label_view.labels
-    logger.info(
-        "detect_network_node_anomalies: %d nodes, %d flagged",
-        len(out),
-        int(out["flag"].sum()),
+def detect_network_edge_anomalies(
+    edge_features: pd.DataFrame,
+    threshold_rule: ThresholdRule,
+    *,
+    feature_cols: list[str] | None = None,
+    contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
+    n_estimators: int = DEFAULT_ISOLATION_FOREST_N_ESTIMATORS,
+    random_state: int | None = None,
+) -> pd.DataFrame:
+    """Flag structurally unusual dyads using isolation forest on edge features.
+
+    Expects a frame such as the output of :func:`edge_features_from_edges`
+    (numeric columns only are used by default).
+
+    Raises:
+        ValueError: If fewer than two edges are present.
+    """
+    return _detect_with_isolation_forest(
+        edge_features,
+        threshold_rule,
+        feature_cols=feature_cols,
+        contamination=contamination,
+        n_estimators=n_estimators,
+        random_state=random_state,
+        min_rows=2,
+        too_few_message=(
+            "detect_network_edge_anomalies requires at least 2 edges; "
+            f"got {len(edge_features)}"
+        ),
+        log_action="detect_network_edge_anomalies",
     )
-    return out
+
+
+def detect_network_temporal_node_anomalies(
+    touch_counts_by_bin: pd.DataFrame,
+    threshold_rule: ThresholdRule,
+    *,
+    feature_cols: list[str] | None = None,
+    contamination: float = DEFAULT_OUTLIER_CONTAMINATION,
+    n_estimators: int = DEFAULT_ISOLATION_FOREST_N_ESTIMATORS,
+    random_state: int | None = None,
+) -> pd.DataFrame:
+    """Flag nodes whose time-bin activity vectors look unlike the rest.
+
+    Rows are nodes (index from :func:`node_touch_counts_by_bin`). Columns should
+    be numeric bin counts (any column names); by default all numeric columns are
+    used as features.
+
+    Raises:
+        ValueError: If fewer than two nodes, no numeric columns, or any bin
+            column contains non-finite values.
+    """
+    cols = (
+        feature_cols
+        if feature_cols is not None
+        else _numeric_feature_columns(touch_counts_by_bin)
+    )
+    if not cols:
+        raise ValueError(
+            "detect_network_temporal_node_anomalies needs at least one numeric "
+            "time-bin column in touch_counts_by_bin (or pass feature_cols)."
+        )
+    return _detect_with_isolation_forest(
+        touch_counts_by_bin,
+        threshold_rule,
+        feature_cols=feature_cols,
+        contamination=contamination,
+        n_estimators=n_estimators,
+        random_state=random_state,
+        min_rows=2,
+        too_few_message=(
+            "detect_network_temporal_node_anomalies requires at least 2 nodes; "
+            f"got {len(touch_counts_by_bin)}"
+        ),
+        log_action="detect_network_temporal_node_anomalies",
+    )

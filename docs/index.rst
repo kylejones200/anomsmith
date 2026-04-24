@@ -17,6 +17,7 @@ Anomsmith does not replace forecasting or monitoring systems. It complements the
 
    getting_started
    architecture
+   network
    platform
    migration_from_anomaly_detection_toolkit
    design_decisions

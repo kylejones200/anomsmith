@@ -6,8 +6,12 @@ import pytest
 from anomsmith.primitives.thresholding import ThresholdRule
 from anomsmith.workflows.network import (
     aggregate_undirected_edges,
+    detect_network_edge_anomalies,
     detect_network_node_anomalies,
+    detect_network_temporal_node_anomalies,
+    edge_features_from_edges,
     node_features_from_edges,
+    node_touch_counts_by_bin,
 )
 
 
@@ -52,6 +56,52 @@ class TestNodeFeaturesFromEdges:
         feat = node_features_from_edges(edges, members)
         assert feat.loc[3, "weighted_degree"] == 0.0
         assert feat.loc[3, "neighbor_count"] == 0.0
+
+
+class TestEdgeFeaturesAndEdgeAnomalies:
+    def test_edge_features_requires_non_empty_edges(self) -> None:
+        with pytest.raises(ValueError, match="non-empty"):
+            edge_features_from_edges(
+                pd.DataFrame(columns=["u", "v", "weight"]), nodes=[1, 2]
+            )
+
+    def test_share_of_endpoint_volume_bounded(self) -> None:
+        edges = aggregate_undirected_edges(
+            pd.DataFrame({"sender_id": [1, 1], "receiver_id": [2, 2]})
+        )
+        ef = edge_features_from_edges(edges, [1, 2])
+        assert (ef["share_of_endpoint_volume"] <= 1.0 + 1e-9).all()
+        assert (ef["share_of_endpoint_volume"] >= 0.0).all()
+
+    def test_detect_edge_anomalies_min_two_edges(self) -> None:
+        ef = pd.DataFrame({"weight": [1.0]}, index=pd.MultiIndex.from_tuples([(1, 2)]))
+        rule = ThresholdRule(method="quantile", value=0.0, quantile=0.5)
+        with pytest.raises(ValueError, match="at least 2 edges"):
+            detect_network_edge_anomalies(ef, rule)
+
+
+class TestTemporalTouchCounts:
+    def test_touch_counts_shape_and_spike(self) -> None:
+        comms = pd.DataFrame(
+            {
+                "sender_id": [1, 1, 1, 2],
+                "receiver_id": [2, 2, 2, 3],
+                "timestamp": pd.to_datetime(
+                    ["2024-06-01", "2024-06-01", "2024-06-02", "2024-06-02"]
+                ),
+            }
+        )
+        nodes = [1, 2, 3]
+        touch = node_touch_counts_by_bin(comms, nodes, freq="1D")
+        assert list(touch.index) == nodes
+        assert touch.shape[1] == 2
+        assert touch.loc[1].sum() >= 3
+
+    def test_temporal_detect_requires_bin_columns(self) -> None:
+        wide = pd.DataFrame(0.0, index=[1, 2], columns=[])
+        rule = ThresholdRule(method="quantile", value=0.0, quantile=0.5)
+        with pytest.raises(ValueError, match="numeric"):
+            detect_network_temporal_node_anomalies(wide, rule)
 
 
 class TestDetectNetworkNodeAnomalies:

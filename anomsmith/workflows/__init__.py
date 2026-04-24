@@ -29,8 +29,12 @@ from anomsmith.workflows.model_monitoring import (
 )
 from anomsmith.workflows.network import (
     aggregate_undirected_edges,
+    detect_network_edge_anomalies,
     detect_network_node_anomalies,
+    detect_network_temporal_node_anomalies,
+    edge_features_from_edges,
     node_features_from_edges,
+    node_touch_counts_by_bin,
 )
 from anomsmith.workflows.pca_pm import (
     assess_health_with_pca,
@@ -76,5 +80,9 @@ __all__ = [
     "compute_pca_health_thresholds",
     "aggregate_undirected_edges",
     "node_features_from_edges",
+    "edge_features_from_edges",
+    "node_touch_counts_by_bin",
     "detect_network_node_anomalies",
+    "detect_network_edge_anomalies",
+    "detect_network_temporal_node_anomalies",
 ]

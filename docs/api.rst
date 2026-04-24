@@ -30,6 +30,13 @@ Workflows
    :undoc-members:
    :show-inheritance:
 
+Network workflows
+~~~~~~~~~~~~~~~~~
+
+.. automodule:: anomsmith.workflows.network
+   :members:
+   :undoc-members:
+
 Platform (predictive maintenance)
 ---------------------------------
 
