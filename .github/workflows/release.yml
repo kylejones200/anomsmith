@@ -15,7 +15,7 @@ permissions:
 jobs:
   build-and-publish:
     name: Build and publish package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: pypi
     steps:
