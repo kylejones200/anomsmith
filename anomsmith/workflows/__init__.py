@@ -27,6 +27,11 @@ from anomsmith.workflows.model_monitoring import (
     compute_performance_metrics,
     detect_concept_drift,
 )
+from anomsmith.workflows.network import (
+    aggregate_undirected_edges,
+    detect_network_node_anomalies,
+    node_features_from_edges,
+)
 from anomsmith.workflows.pca_pm import (
     assess_health_with_pca,
     classify_health_from_distance,
@@ -69,4 +74,7 @@ __all__ = [
     "classify_health_from_distance",
     "assess_health_with_pca",
     "compute_pca_health_thresholds",
+    "aggregate_undirected_edges",
+    "node_features_from_edges",
+    "detect_network_node_anomalies",
 ]
