@@ -255,6 +255,99 @@ def node_features_from_edges(
     return out
 
 
+def node_graph_metrics_networkx(
+    edges: pd.DataFrame,
+    nodes: pd.Index | list[Any] | np.ndarray,
+    *,
+    u_col: str = "u",
+    v_col: str = "v",
+    weight_col: str = "weight",
+) -> pd.DataFrame:
+    """Graph centrality metrics via NetworkX (optional dependency).
+
+    Installs with the ``network`` extra: ``pip install 'anomsmith[network]'``.
+
+    Builds an undirected graph: every id in ``nodes`` is a vertex; edges from
+    ``edges`` carry combined weights (parallel edges in the table should be
+    pre-aggregated). Centrality matches common org-network dashboards: topology
+    for betweenness and closeness; eigenvector uses edge ``weight``.
+
+    Columns:
+
+    - ``betweenness_centrality`` — NetworkX ``betweenness_centrality`` (unweighted hops).
+    - ``closeness_centrality`` — NetworkX ``closeness_centrality``.
+    - ``eigenvector_centrality`` — weighted when convergence succeeds; else zeros.
+
+    Args:
+        edges: Aggregated ``u``, ``v``, ``weight`` table (may be empty).
+        nodes: Full roster; isolated members still appear with zeros.
+        u_col, v_col, weight_col: Column names in ``edges``.
+
+    Returns:
+        DataFrame aligned to ``nodes`` with the three metric columns.
+
+    Raises:
+        ImportError: If NetworkX is not installed.
+    """
+    try:
+        import networkx as nx
+    except ImportError as exc:  # pragma: no cover - exercised when nx missing
+        raise ImportError(
+            "node_graph_metrics_networkx requires networkx. "
+            "Install with: pip install 'anomsmith[network]'"
+        ) from exc
+
+    if isinstance(nodes, np.ndarray):
+        node_index = pd.Index(nodes)
+    elif isinstance(nodes, list):
+        node_index = pd.Index(nodes)
+    else:
+        node_index = nodes
+    if node_index.duplicated().any():
+        raise ValueError("nodes must be unique")
+
+    G = nx.Graph()
+    for nid in node_index:
+        G.add_node(nid)
+
+    node_set = set(node_index.tolist())
+    if not edges.empty:
+        for col in (u_col, v_col, weight_col):
+            if col not in edges.columns:
+                raise ValueError(f"edges is missing column {col!r}")
+        for _, row in edges.iterrows():
+            u, v, wt = row[u_col], row[v_col], float(row[weight_col])
+            if u not in node_set or v not in node_set or wt <= 0.0:
+                continue
+            if G.has_edge(u, v):
+                G[u][v]["weight"] = float(G[u][v].get("weight", 0.0)) + wt
+            else:
+                G.add_edge(u, v, weight=wt)
+
+    bc_raw = nx.betweenness_centrality(G, normalized=True)
+    cc_raw = nx.closeness_centrality(G)
+    try:
+        ev_raw = nx.eigenvector_centrality(G, max_iter=1000, weight="weight")
+    except (nx.PowerIterationFailedConvergence, nx.NetworkXError):
+        ev_raw = {n: 0.0 for n in G.nodes()}
+
+    def _series(d: dict[Any, float], default: float = 0.0) -> pd.Series:
+        return pd.Series(
+            {nid: float(d.get(nid, default)) for nid in node_index},
+            dtype=np.float64,
+        )
+
+    out = pd.DataFrame(
+        {
+            "betweenness_centrality": _series(bc_raw),
+            "closeness_centrality": _series(cc_raw),
+            "eigenvector_centrality": _series(ev_raw),
+        },
+        index=node_index.copy(),
+    )
+    return out
+
+
 def edge_features_from_edges(
     edges: pd.DataFrame,
     nodes: pd.Index | list[Any] | np.ndarray,

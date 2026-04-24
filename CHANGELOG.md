@@ -61,3 +61,12 @@ All notable changes to this project will be documented in this file.
 - Batch inference propagates errors instead of yielding empty scores/labels
 - `process_s3_batch` validates non-empty `s3_keys`
 - Renamed `mypi.ini` to `mypy.ini`
+
+## [0.0.3] - 2026-04-24
+
+### Added
+
+- **Network workflows** (``anomsmith.workflows.network``): optional ``[network]``
+  extra (NetworkX); ``node_graph_metrics_networkx`` for betweenness, closeness,
+  and eigenvector centralities; structural / temporal / dyad isolation-forest
+  helpers and documentation (``docs/network.rst``).

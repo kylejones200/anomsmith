@@ -35,7 +35,8 @@ Temporal profiles (who spikes when?)
 2. :func:`~anomsmith.workflows.network.detect_network_temporal_node_anomalies` —
    each node's vector of bin counts is a feature row for isolation forest.
 
-Dependencies stay in **numpy**, **pandas**, and **scikit-learn**; there is no
-required NetworkX or graph database.
+Core paths use **numpy**, **pandas**, and **scikit-learn** only. Optional
+**NetworkX** metrics (betweenness, closeness, eigenvector) are available via
+``pip install 'anomsmith[network]'`` and :func:`~anomsmith.workflows.network.node_graph_metrics_networkx`.
 
 See also :mod:`anomsmith.workflows.network` in the API reference.

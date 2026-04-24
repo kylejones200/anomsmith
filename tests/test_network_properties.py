@@ -12,6 +12,7 @@ from anomsmith.workflows.network import (
     _build_neighbor_lists,
     _pagerank_undirected,
     aggregate_undirected_edges,
+    edge_features_from_edges,
 )
 
 # CI-friendly example counts (property tests can be slower locally with max_examples)
@@ -200,3 +201,46 @@ class TestPageRankProperties:
         r_perm = _pagerank_undirected(n, nbr_p, str_p)
         expected = r_orig[inv]
         np.testing.assert_allclose(r_perm, expected, rtol=1e-5, atol=1e-5)
+
+
+class TestShareOfEndpointVolumeProperties:
+    @_SETTINGS
+    @given(
+        st.lists(
+            st.tuples(st.integers(0, 10), st.integers(0, 10)),
+            max_size=50,
+        )
+    )
+    def test_share_in_zero_one_for_roster_endpoints(self, pairs: list[tuple[int, int]]) -> None:
+        pairs_nontrivial = [(a, b) for a, b in pairs if a != b]
+        if not pairs_nontrivial:
+            return
+        df = pd.DataFrame(pairs_nontrivial, columns=["sender_id", "receiver_id"])
+        edges = aggregate_undirected_edges(df)
+        if edges.empty:
+            return
+        nodes = sorted(set(df["sender_id"]) | set(df["receiver_id"]))
+        ef = edge_features_from_edges(edges, nodes)
+        share = ef["share_of_endpoint_volume"].to_numpy(dtype=np.float64)
+        assert (share >= -1e-12).all()
+        assert (share <= 1.0 + 1e-9).all()
+
+    @_SETTINGS
+    @given(
+        st.lists(
+            st.tuples(st.integers(0, 6), st.integers(0, 6)),
+            min_size=1,
+            max_size=30,
+        ).map(lambda xs: [(a, b) for a, b in xs if a != b])
+    )
+    def test_share_invariant_under_row_shuffle(self, pairs: list[tuple[int, int]]) -> None:
+        if len(pairs) < 1:
+            return
+        base = pd.DataFrame(pairs, columns=["sender_id", "receiver_id"])
+        edges_a = aggregate_undirected_edges(base)
+        nodes = sorted(set(base["sender_id"]) | set(base["receiver_id"]))
+        shuffled = base.sample(frac=1.0, random_state=1).reset_index(drop=True)
+        edges_b = aggregate_undirected_edges(shuffled)
+        ea = edge_features_from_edges(edges_a, nodes).sort_index()
+        eb = edge_features_from_edges(edges_b, nodes).sort_index()
+        pd.testing.assert_frame_equal(ea, eb)
