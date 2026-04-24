@@ -78,7 +78,7 @@ def _build_neighbor_lists(
 ) -> tuple[list[list[tuple[int, float]]], np.ndarray]:
     """Undirected adjacency as neighbor lists and weighted degree (strength)."""
     neighbors: list[list[tuple[int, float]]] = [[] for _ in range(n)]
-    strength = np.zeros(n, dtype=np.float64)
+    strength: np.ndarray = np.zeros(n, dtype=np.float64)
     for a, b, wt in zip(src, dst, w):
         ia, ib = int(a), int(b)
         neighbors[ia].append((ib, float(wt)))
@@ -98,10 +98,10 @@ def _pagerank_undirected(
     tol: float = 1e-8,
 ) -> np.ndarray:
     """Power iteration PageRank on an undirected weighted graph."""
-    r = np.full(n, 1.0 / max(n, 1), dtype=np.float64)
+    r: np.ndarray = np.full(n, 1.0 / max(n, 1), dtype=np.float64)
     teleport = (1.0 - alpha) / max(n, 1)
     for _ in range(max_iter):
-        r_new = np.full(n, teleport, dtype=np.float64)
+        r_new: np.ndarray = np.full(n, teleport, dtype=np.float64)
         for i in range(n):
             ri = r[i]
             if ri == 0.0:
