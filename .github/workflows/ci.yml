@@ -23,7 +23,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install deps
-        run: uv pip install -e ".[dev]"
+        run: uv pip install --system -e ".[dev]"
 
       - name: Test with coverage
         run: |
