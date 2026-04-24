@@ -1,6 +1,5 @@
 """Tests for network anomaly workflows (org-style communication graphs)."""
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -57,7 +56,6 @@ class TestNodeFeaturesFromEdges:
 
 class TestDetectNetworkNodeAnomalies:
     def test_flags_extreme_hub(self) -> None:
-        rng = np.random.default_rng(42)
         members = list(range(20))
         rows = []
         hub = 0
