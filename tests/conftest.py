@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 
-def pytest_report_header(_config: Any) -> list[str]:
+def pytest_report_header(config: Any) -> list[str]:  # noqa: ARG001 — name fixed by pytest hookspec
     return [
         "anomsmith: CI tests run on Linux (ubuntu-24.04); see .github/workflows/ci.yml",
     ]

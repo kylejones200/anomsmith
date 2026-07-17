@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+(nothing yet)
+
+## [0.0.4] - 2026-07-16
+
 ### Added
 
 - **``anomsmith.platform``**: merged the predictive maintenance, evaluation, and
