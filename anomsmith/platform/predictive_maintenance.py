@@ -252,7 +252,7 @@ class FeatureExtractor:
         freqs: np.ndarray, power: np.ndarray, rolloff_percent: float = 0.85
     ) -> float:
         """Calculate spectral rolloff frequency."""
-        cumsum_power = np.cumsum(power)
+        cumsum_power: np.ndarray = np.cumsum(power)
         total_power = cumsum_power[-1]
         if total_power == 0:
             return 0.0
